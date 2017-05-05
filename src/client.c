@@ -61,9 +61,9 @@ int main(int argc, const char* argv[])
 			int sock = establish_connection();
 			if(sock!=-1)
 			{
-				const int red;
-				const int green;
-				const int blue;
+				int red;
+				int green;
+				int blue;
 				
 				write(sock, &command, sizeof(int));
 				read(sock, &red, sizeof(int));

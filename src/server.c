@@ -50,12 +50,12 @@ int process_request(int pi, int sock)
 	unsigned int r;
 	unsigned int g;
 	unsigned int b;
-	if(read(sock, &command, sizeof(int))==0)
-	{
-		printf("error: unable to read command!\n");
-	}
+	read(sock, &command, sizeof(int));
+	
 	if(command == 2)
 	{
+		printf("read command id: %d\n", command);
+		printf("Connection accepted...\n");
 		read(sock, &r, sizeof(int));
 		read(sock, &g, sizeof(int));
 		read(sock, &b, sizeof(int));
@@ -85,64 +85,58 @@ void fork_child_task(int pi)
 {
 	struct sockaddr servaddr = {AF_UNIX, "colorserver"};
 	socklen_t servaddrlen = sizeof(struct sockaddr)+12;
-	
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	
-	if(sock != -1)
+	//init values of color cycle
+	int r = 0;
+	int g = 0;
+	int b = 0;
+	int g_desc = 1;
+	int step = 1;
+	int command = 0;
+	set_PWM_dutycycle(pi, RED_PIN, r);
+	set_PWM_dutycycle(pi, GREEN_PIN, g);
+	set_PWM_dutycycle(pi, BLUE_PIN, b);
+	const struct timespec delay = {0, 500000000};
+	struct timespec catch;
+	while(nanosleep(&delay, &catch) != -1)
 	{
-		//init values of color cycle
-		int r = 50;
-		int g = 0;
-		int b = 10;
-		int g_desc = 1;
-		int step = 1;
-		int command = 0;
-		set_PWM_dutycycle(pi, RED_PIN, r);
-		set_PWM_dutycycle(pi, GREEN_PIN, g);
-		set_PWM_dutycycle(pi, BLUE_PIN, b);
-		const struct timespec delay = {0, 50000000};
-		struct timespec catch;
-		while(nanosleep(&delay, &catch) != -1)
-		{
-			//attempt to connect to server to get current values
-			command = 3
+		//printf("delta color loop is running...\n");
+		//attempt to connect to server to get current values
+		command = 5;
+		int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+		if(sock != -1)
+		{		
 			if(connect(sock, &servaddr, servaddrlen)!=-1)
 			{
 				write(sock, &command, sizeof(int));
+				
 				read(sock, &r, sizeof(int));
 				read(sock, &g, sizeof(int));
 				read(sock, &b, sizeof(int));
-				close(sock);
-			}
-			//changes to color values below
-			if(g_desc==1)
-			{
-				g+=step;
-			}else if(g_desc==0)
-			{
-				g-=step;
-			}
-			
-			
-			if(g >= 255)
-			{
-				g = 255;
-				g_desc = 0;
-			}else if(g <= 0)
-			{
-				g = 0;
-				g_desc = 1;
-			}
-			
-			set_PWM_dutycycle(pi, RED_PIN, r);
-			set_PWM_dutycycle(pi, GREEN_PIN, g);
-			set_PWM_dutycycle(pi, BLUE_PIN, b);
-			
-			//attempts to update server values
-			command = 4;
-			if(connect(sock, &servaddr, servaddrlen)!=-1)
-			{
-				write(sock, &command, sizeof(int));
+				//changes to color values below
+				if(g_desc==1)
+				{
+					g+=step;
+				}else if(g_desc==0)
+				{
+					g-=step;
+				}
+				
+				
+				if(g >= 255)
+				{
+					g = 255;
+					g_desc = 0;
+				}else if(g <= 0)
+				{
+					g = 0;
+					g_desc = 1;
+				}
+				
+				set_PWM_dutycycle(pi, RED_PIN, r);
+				set_PWM_dutycycle(pi, GREEN_PIN, g);
+				set_PWM_dutycycle(pi, BLUE_PIN, b);
+				
+				//attempts to update server values
 				write(sock, &r, sizeof(int));
 				write(sock, &g, sizeof(int));
 				write(sock, &b, sizeof(int));
@@ -272,13 +266,12 @@ void listen_loop2()
 			sigaction(SIGINT, &news, &olds);
 			int r = 0;
 			int g = 0;
-			int b = 0;
+			int b = 10;
 			while(var == 0)
 			{
 				int sock2 = accept(sock1, NULL, NULL);
 				if(sock2!=-1)
 				{
-					printf("Connection accepted...\n");
 					int resp_code = process_request(pi, sock2);
 					if(resp_code == 1)
 					{
@@ -286,15 +279,24 @@ void listen_loop2()
 						ctrlc();
 					}else if(resp_code == 3)
 					{
-						write(sock, &r, sizeof(int));
-						write(sock, &g, sizeof(int));
-						write(sock, &b, sizeof(int));
+						write(sock2, &r, sizeof(int));
+						write(sock2, &g, sizeof(int));
+						write(sock2, &b, sizeof(int));
 						close(sock2);
 					}else if(resp_code == 4)
 					{
-						read(sock, &r, sizeof(int));
-						read(sock, &g, sizeof(int));
-						read(sock, &b, sizeof(int));
+						read(sock2, &r, sizeof(int));
+						read(sock2, &g, sizeof(int));
+						read(sock2, &b, sizeof(int));
+						close(sock2);
+					}else if(resp_code == 5)
+					{
+						write(sock2, &r, sizeof(int));
+						write(sock2, &g, sizeof(int));
+						write(sock2, &b, sizeof(int));
+						read(sock2, &r, sizeof(int));
+						read(sock2, &g, sizeof(int));
+						read(sock2, &b, sizeof(int));
 						close(sock2);
 					}else
 					{

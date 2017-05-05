@@ -47,37 +47,7 @@ int process_request(int pi, int sock)
 		
 	*/
 	int command = 0;
-	unsigned int r;
-	unsigned int g;
-	unsigned int b;
 	read(sock, &command, sizeof(int));
-	
-	if(command == 2)
-	{
-		printf("read command id: %d\n", command);
-		printf("Connection accepted...\n");
-		read(sock, &r, sizeof(int));
-		read(sock, &g, sizeof(int));
-		read(sock, &b, sizeof(int));
-		if(r>255)
-		{
-			r=255;
-		}
-		
-		if(g>255)
-		{
-			g=255;
-		}
-		
-		if(b>255)
-		{
-			b=255;
-		}
-		
-		set_PWM_dutycycle(pi, RED_PIN, r);
-		set_PWM_dutycycle(pi, GREEN_PIN, g);
-		set_PWM_dutycycle(pi, BLUE_PIN, b);
-	}
 	return command;
 }
 
@@ -131,10 +101,6 @@ void fork_child_task(int pi)
 					g = 0;
 					g_desc = 1;
 				}
-				
-				set_PWM_dutycycle(pi, RED_PIN, r);
-				set_PWM_dutycycle(pi, GREEN_PIN, g);
-				set_PWM_dutycycle(pi, BLUE_PIN, b);
 				
 				//attempts to update server values
 				write(sock, &r, sizeof(int));
@@ -267,16 +233,28 @@ void listen_loop2()
 			int r = 0;
 			int g = 0;
 			int b = 10;
+			int colorchanged = 0;
 			while(var == 0)
 			{
 				int sock2 = accept(sock1, NULL, NULL);
 				if(sock2!=-1)
 				{
 					int resp_code = process_request(pi, sock2);
+					printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
 					if(resp_code == 1)
 					{
 						close(sock2);
 						ctrlc();
+					}else if(resp_code == 2)
+					{
+						if(colorchanged == 0)
+						{
+							read(sock2, &r, sizeof(int));
+							read(sock2, &g, sizeof(int));
+							read(sock2, &b, sizeof(int));
+							colorchanged = 1;
+						}
+						close(sock2);
 					}else if(resp_code == 3)
 					{
 						write(sock2, &r, sizeof(int));
@@ -285,22 +263,34 @@ void listen_loop2()
 						close(sock2);
 					}else if(resp_code == 4)
 					{
-						read(sock2, &r, sizeof(int));
-						read(sock2, &g, sizeof(int));
-						read(sock2, &b, sizeof(int));
+						write(sock2, &r, sizeof(int));
+						write(sock2, &g, sizeof(int));
+						write(sock2, &b, sizeof(int));
 						close(sock2);
 					}else if(resp_code == 5)
 					{
 						write(sock2, &r, sizeof(int));
 						write(sock2, &g, sizeof(int));
 						write(sock2, &b, sizeof(int));
-						read(sock2, &r, sizeof(int));
-						read(sock2, &g, sizeof(int));
-						read(sock2, &b, sizeof(int));
+						if(colorchanged == 0)
+						{
+							read(sock2, &r, sizeof(int));
+							read(sock2, &g, sizeof(int));
+							read(sock2, &b, sizeof(int));
+							colorchanged = 1;
+						}
 						close(sock2);
 					}else
 					{
 						close(sock2);
+					}
+					
+					if(colorchanged==1)
+					{
+						set_PWM_dutycycle(pi, RED_PIN, r);
+						set_PWM_dutycycle(pi, GREEN_PIN, g);
+						set_PWM_dutycycle(pi, BLUE_PIN, b);
+						colorchanged = 0;
 					}
 				}
 			}

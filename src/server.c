@@ -35,22 +35,30 @@ int main(int argc, const char* argv[])
 
 int process_request(int pi, int sock)
 {
-	int ret = 0;
+	/*
+		command state
+		command#	client_command		description
+			0			n/a					unused
+			1			halt				client requests that server be stopped.
+			2			stclr				set pins to given rgb values (0-255).
+			3			n/a					signal from forked task requesting the current rgb values.
+			4			n/a					signal from forked task requesting to update current rgb values.
+			4			getcolor			output current color to console.
+		
+	*/
 	int command = 0;
 	unsigned int r;
 	unsigned int g;
 	unsigned int b;
-	read(sock, &command, sizeof(int));
-	read(sock, &r, sizeof(int));
-	read(sock, &g, sizeof(int));
-	read(sock, &b, sizeof(int));
-	if(command == 1)
+	if(read(sock, &command, sizeof(int))==0)
 	{
-		ret = 1;
+		printf("error: unable to read command!\n");
 	}
-	else if(command == 2)
+	if(command == 2)
 	{
-		
+		read(sock, &r, sizeof(int));
+		read(sock, &g, sizeof(int));
+		read(sock, &b, sizeof(int));
 		if(r>255)
 		{
 			r=255;
@@ -70,46 +78,78 @@ int process_request(int pi, int sock)
 		set_PWM_dutycycle(pi, GREEN_PIN, g);
 		set_PWM_dutycycle(pi, BLUE_PIN, b);
 	}
-	return ret;
+	return command;
 }
 
 void fork_child_task(int pi)
 {
-	//init values of color cycle
-	int r = 50;
-	int g = 0;
-	int b = 10;
-	int desc = 1;
-	int step = 1;
-	const struct timespec delay = {0, 50000000};
-	struct timespec catch;
-	while(nanosleep(&delay, &catch) != -1)
+	struct sockaddr servaddr = {AF_UNIX, "colorserver"};
+	socklen_t servaddrlen = sizeof(struct sockaddr)+12;
+	
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	
+	if(sock != -1)
 	{
-		//changes to color values below
-		if(desc==1)
-		{
-			g+=step;
-		}else if(desc==0)
-		{
-			g-=step;
-		}
-		
-		
-		if(g >= 255)
-		{
-			g = 255;
-			desc = 0;
-		}else if(g <= 0)
-		{
-			g = 0;
-			desc = 1;
-		}
-		
+		//init values of color cycle
+		int r = 50;
+		int g = 0;
+		int b = 10;
+		int g_desc = 1;
+		int step = 1;
+		int command = 0;
 		set_PWM_dutycycle(pi, RED_PIN, r);
 		set_PWM_dutycycle(pi, GREEN_PIN, g);
 		set_PWM_dutycycle(pi, BLUE_PIN, b);
+		const struct timespec delay = {0, 50000000};
+		struct timespec catch;
+		while(nanosleep(&delay, &catch) != -1)
+		{
+			//attempt to connect to server to get current values
+			command = 3
+			if(connect(sock, &servaddr, servaddrlen)!=-1)
+			{
+				write(sock, &command, sizeof(int));
+				read(sock, &r, sizeof(int));
+				read(sock, &g, sizeof(int));
+				read(sock, &b, sizeof(int));
+				close(sock);
+			}
+			//changes to color values below
+			if(g_desc==1)
+			{
+				g+=step;
+			}else if(g_desc==0)
+			{
+				g-=step;
+			}
+			
+			
+			if(g >= 255)
+			{
+				g = 255;
+				g_desc = 0;
+			}else if(g <= 0)
+			{
+				g = 0;
+				g_desc = 1;
+			}
+			
+			set_PWM_dutycycle(pi, RED_PIN, r);
+			set_PWM_dutycycle(pi, GREEN_PIN, g);
+			set_PWM_dutycycle(pi, BLUE_PIN, b);
+			
+			//attempts to update server values
+			command = 4;
+			if(connect(sock, &servaddr, servaddrlen)!=-1)
+			{
+				write(sock, &command, sizeof(int));
+				write(sock, &r, sizeof(int));
+				write(sock, &g, sizeof(int));
+				write(sock, &b, sizeof(int));
+				close(sock);
+			}
+		}
 	}
-	exit(1);
 }
 
 void listen_loop()
@@ -128,7 +168,7 @@ void listen_loop()
 		pigpio_stop(pi);
 		exit(1);
 	}
-	printf("\nSocket Creadted successfully with name/id \"colorserver\"\n");
+	printf("\nSocket Created successfully!\n");
 	bind(sock1, &servaddr, servaddrlen);
 	
 	if( listen(sock1, 0) != -1 )
@@ -138,7 +178,7 @@ void listen_loop()
 		struct sigaction news, olds;
 		void ctrlc()
 		{
-			printf("\nHalting Color Server...\n");
+			printf("Halting Color Server...\n");
 			sigaction(SIGINT, &olds, NULL);
 			close(sock1);
 			var+=1;
@@ -193,23 +233,23 @@ void listen_loop2()
 		pigpio_stop(pi);
 		exit(1);
 	}
-	printf("\nSocket Creadted successfully with name/id \"colorserver\"\n");
+	printf("\nSocket Created successfully with name/id \"colorserver\"\n");
 	bind(sock1, &servaddr, servaddrlen);
 	
 	if( listen(sock1, 0) != -1 )
 	{
 		pid_t fd = fork();
 		
-		if(fd == 0)
+		if(fd == 0) //child task
 		{
 			fork_child_task(pi);
 			exit(1);
-		}else if(fd>0)
+		}else if(fd>0) //parent task
 		{
 			printf("Server now listening for connections...\n");
 			int var = 0;
 			struct sigaction news, olds;
-			
+			int status;
 			void ctrlc()
 			{
 				printf("\nHalting Color Server...\n");
@@ -217,15 +257,22 @@ void listen_loop2()
 				close(sock1);
 				var+=1;
 				unlink("colorserver");
-				kill(fd, SIGKILL);
+				if(waitpid(fd, &status, WNOHANG) == 0)
+				{
+					kill(fd, SIGKILL);
+				}
 				set_PWM_dutycycle(pi, RED_PIN, 0);
 				set_PWM_dutycycle(pi, GREEN_PIN, 0);
 				set_PWM_dutycycle(pi, BLUE_PIN, 0);
+				pigpio_stop(pi);
 			}
 			
 			news.sa_handler = ctrlc;
 			news.sa_flags = 0;
 			sigaction(SIGINT, &news, &olds);
+			int r = 0;
+			int g = 0;
+			int b = 0;
 			while(var == 0)
 			{
 				int sock2 = accept(sock1, NULL, NULL);
@@ -233,17 +280,32 @@ void listen_loop2()
 				{
 					printf("Connection accepted...\n");
 					int resp_code = process_request(pi, sock2);
-					close(sock2);
 					if(resp_code == 1)
 					{
+						close(sock2);
 						ctrlc();
+					}else if(resp_code == 3)
+					{
+						write(sock, &r, sizeof(int));
+						write(sock, &g, sizeof(int));
+						write(sock, &b, sizeof(int));
+						close(sock2);
+					}else if(resp_code == 4)
+					{
+						read(sock, &r, sizeof(int));
+						read(sock, &g, sizeof(int));
+						read(sock, &b, sizeof(int));
+						close(sock2);
+					}else
+					{
+						close(sock2);
 					}
-					
 				}
 			}
 		}else
 		{
 			printf("Fork failed, aborting...\n");
+			pigpio_stop(pi);
 			exit(1);
 		}
 		
@@ -254,6 +316,4 @@ void listen_loop2()
 		exit(1);
 		
 	}
-	pigpio_stop(pi);
-	
 }

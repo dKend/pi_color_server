@@ -1,3 +1,4 @@
+#include <stdbool.h>
 typedef struct {
 	unsigned int red;
 	unsigned int green;
@@ -15,9 +16,13 @@ void color_set_delay(color* c, unsigned int value);
 
 typedef struct node{
 	color data;
-	node* next;
+	struct node* next;
 } node;
 
-void colorlist_init(node** head);
-void colorlist_add(node** head, node** tail, color n);
-void colorlist_free(node** head);
+void colorlist_init(struct node** head, struct node** tail);
+void colorlist_add(struct node** head, struct node** tail, struct node* n);
+void colorlist_free(struct node** head);
+
+int assert_(bool statement, const char* error);
+int assert_false(bool statement, const char* error);
+int test_();

@@ -9,9 +9,12 @@
 #include <time.h>
 #include <pigpiod_if2.h>
 
+#include "color.h"
+
 #define RED_PIN 17
 #define GREEN_PIN 22
 #define BLUE_PIN 24
+
 
 void listen_loop();
 void listen_loop2();
@@ -25,6 +28,9 @@ int main(int argc, const char* argv[])
 		if(strcmp(argv[1], "-c")==0)
 		{
 			listen_loop2();
+		}else if (strcmp(argv[1], "-test")==0)
+		{
+			test_();
 		}
 	}else
 	{

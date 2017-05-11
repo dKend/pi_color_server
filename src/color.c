@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "color.h"
 
 #define MAX_COLOR 255
-
+#define PI 3.14
 int test_(){
 	void test_color_init()
 	{
@@ -205,4 +206,31 @@ int assert_(bool statement, const char* error)
 int assert_false(bool statement, const char* error)
 {
 	return assert_(!statement, error);
+}
+
+int sin_cycle(float time, float wavelength)
+{
+	//time - current time
+	//wavelength - length in time units of 1 wave
+	float rad = ((2*PI)*time)/wavelength;
+	return 128*(1+sin(rad));
+}
+
+int sin_color_cycle(float time, float wavelength, int start, int end)
+{
+	//time - current time
+	//wavelength - length in time units of 1 wave
+	//offset - relative to sine function max range[0, 1]
+	float midpoint = (start + end)/2;
+	float amplitude = (end - start)/2;
+	
+	if(amplitude == 0)
+	{
+		return -1;
+	}
+	
+	float offset = (midpoint/amplitude) - 1.0;
+	float rad = ((2*PI)*time)/wavelength;
+	
+	return (int)amplitude*((1+offset)+sin(rad));
 }

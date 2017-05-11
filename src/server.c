@@ -50,6 +50,8 @@ int process_request(int pi, int sock)
 			3			n/a					signal from forked task requesting the current rgb values.
 			4			n/a					signal from forked task requesting to update current rgb values.
 			4			getcolor			output current color to console.
+			5			n/a					used by color cycle process to communicate with the main server
+			6			
 		
 	*/
 	int command = 0;
@@ -68,13 +70,19 @@ void fork_child_task(int pi)
 	int g_desc = 1;
 	int step = 1;
 	int command = 0;
+	float wavelength = 20.0;
+	float time = 0.0;
 	set_PWM_dutycycle(pi, RED_PIN, r);
 	set_PWM_dutycycle(pi, GREEN_PIN, g);
 	set_PWM_dutycycle(pi, BLUE_PIN, b);
-	const struct timespec delay = {0, 500000000};
+	const struct timespec delay = {0, 50000000};
 	struct timespec catch;
+	
+	float time_step = delay.tv_nsec / 1000000000.0;
+	
 	while(nanosleep(&delay, &catch) != -1)
 	{
+		time += time_step;
 		//printf("delta color loop is running...\n");
 		//attempt to connect to server to get current values
 		command = 5;
@@ -89,6 +97,11 @@ void fork_child_task(int pi)
 				read(sock, &g, sizeof(int));
 				read(sock, &b, sizeof(int));
 				//changes to color values below
+				
+				
+				g = (int)sin_cycle(time, wavelength);
+				
+				/*
 				if(g_desc==1)
 				{
 					g+=step;
@@ -107,7 +120,7 @@ void fork_child_task(int pi)
 					g = 0;
 					g_desc = 1;
 				}
-				
+				*/
 				//attempts to update server values
 				write(sock, &r, sizeof(int));
 				write(sock, &g, sizeof(int));
@@ -246,51 +259,50 @@ void listen_loop2()
 				if(sock2!=-1)
 				{
 					int resp_code = process_request(pi, sock2);
-					printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
-					if(resp_code == 1)
-					{
-						close(sock2);
-						ctrlc();
-					}else if(resp_code == 2)
-					{
-						if(colorchanged == 0)
-						{
-							read(sock2, &r, sizeof(int));
-							read(sock2, &g, sizeof(int));
-							read(sock2, &b, sizeof(int));
-							colorchanged = 1;
-						}
-						close(sock2);
-					}else if(resp_code == 3)
-					{
-						write(sock2, &r, sizeof(int));
-						write(sock2, &g, sizeof(int));
-						write(sock2, &b, sizeof(int));
-						close(sock2);
-					}else if(resp_code == 4)
-					{
-						write(sock2, &r, sizeof(int));
-						write(sock2, &g, sizeof(int));
-						write(sock2, &b, sizeof(int));
-						close(sock2);
-					}else if(resp_code == 5)
-					{
-						write(sock2, &r, sizeof(int));
-						write(sock2, &g, sizeof(int));
-						write(sock2, &b, sizeof(int));
-						if(colorchanged == 0)
-						{
-							read(sock2, &r, sizeof(int));
-							read(sock2, &g, sizeof(int));
-							read(sock2, &b, sizeof(int));
-							colorchanged = 1;
-						}
-						close(sock2);
-					}else
-					{
-						close(sock2);
-					}
 					
+					switch(resp_code)
+					{
+						case 1:
+							close(sock2);
+							ctrlc();
+							break;
+						
+						case 2:
+							if(colorchanged == 0)
+							{
+								read(sock2, &r, sizeof(int));
+								read(sock2, &g, sizeof(int));
+								read(sock2, &b, sizeof(int));
+								colorchanged = 1;
+							}
+							close(sock2);
+							break;
+						case 3:
+						case 4:
+							write(sock2, &r, sizeof(int));
+							write(sock2, &g, sizeof(int));
+							write(sock2, &b, sizeof(int));
+							close(sock2);
+							break;
+						case 5:
+							write(sock2, &r, sizeof(int));
+							write(sock2, &g, sizeof(int));
+							write(sock2, &b, sizeof(int));
+							if(colorchanged == 0)
+							{
+								read(sock2, &r, sizeof(int));
+								read(sock2, &g, sizeof(int));
+								read(sock2, &b, sizeof(int));
+								colorchanged = 1;
+							}
+							close(sock2);
+							break;
+							
+						default:
+							close(sock2);
+							break;
+					}
+					printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
 					if(colorchanged==1)
 					{
 						set_PWM_dutycycle(pi, RED_PIN, r);

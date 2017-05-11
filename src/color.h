@@ -26,3 +26,6 @@ void colorlist_free(struct node** head);
 int assert_(bool statement, const char* error);
 int assert_false(bool statement, const char* error);
 int test_();
+
+int sin_cycle(float time, float wavelength);
+int sin_color_cycle(float time, float wavelength, int start, int end);

@@ -10,6 +10,7 @@
 #include <pigpiod_if2.h>
 
 #include "color.h"
+#include "client.h"
 
 #define RED_PIN 17
 #define GREEN_PIN 22
@@ -31,6 +32,9 @@ int main(int argc, const char* argv[])
 		}else if (strcmp(argv[1], "-test")==0)
 		{
 			test_();
+		}else
+		{
+			client_handle_input(argc, argv);
 		}
 	}else
 	{
@@ -70,7 +74,7 @@ void fork_child_task(int pi)
 	int g_desc = 1;
 	int step = 1;
 	int command = 0;
-	float wavelength = 20.0;
+	float wavelength = 10.0;
 	float time = 0.0;
 	set_PWM_dutycycle(pi, RED_PIN, r);
 	set_PWM_dutycycle(pi, GREEN_PIN, g);
@@ -99,7 +103,9 @@ void fork_child_task(int pi)
 				//changes to color values below
 				
 				
-				g = (int)sin_cycle(time, wavelength);
+				g = (int)sin_color_cycle(time, wavelength, 0, 255);
+				b = (int)sin_color_cycle(time, wavelength, 0, 10);
+				//r = (int)sin_color_cycle(time, wavelength, 0, 0);
 				
 				/*
 				if(g_desc==1)

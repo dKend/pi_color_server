@@ -234,3 +234,8 @@ int sin_color_cycle(float time, float wavelength, int start, int end)
 	
 	return (int)amplitude*((1+offset)+sin(rad));
 }
+
+void generate_sin_cycle_list(struct node** head, struct node** tail, float time, float wavelength, int start, int end)
+{
+	//TODO
+}

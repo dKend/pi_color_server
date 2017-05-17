@@ -29,3 +29,4 @@ int test_();
 
 int sin_cycle(float time, float wavelength);
 int sin_color_cycle(float time, float wavelength, int start, int end);
+void generate_sin_cycle_list(struct node** head, struct node** tail, float time, float wavelength, int start, int end);

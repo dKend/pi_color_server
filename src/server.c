@@ -71,8 +71,6 @@ void fork_child_task(int pi)
 	int r = 0;
 	int g = 0;
 	int b = 0;
-	int g_desc = 1;
-	int step = 1;
 	int command = 0;
 	float wavelength = 10.0;
 	float time = 0.0;
@@ -102,31 +100,10 @@ void fork_child_task(int pi)
 				read(sock, &b, sizeof(int));
 				//changes to color values below
 				
-				
+				r = (int)sin_color_cycle(time, wavelength, 0, 0);
 				g = (int)sin_color_cycle(time, wavelength, 0, 255);
 				b = (int)sin_color_cycle(time, wavelength, 0, 10);
-				//r = (int)sin_color_cycle(time, wavelength, 0, 0);
 				
-				/*
-				if(g_desc==1)
-				{
-					g+=step;
-				}else if(g_desc==0)
-				{
-					g-=step;
-				}
-				
-				
-				if(g >= 255)
-				{
-					g = 255;
-					g_desc = 0;
-				}else if(g <= 0)
-				{
-					g = 0;
-					g_desc = 1;
-				}
-				*/
 				//attempts to update server values
 				write(sock, &r, sizeof(int));
 				write(sock, &g, sizeof(int));

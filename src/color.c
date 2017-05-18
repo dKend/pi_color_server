@@ -7,6 +7,8 @@
 
 #define MAX_COLOR 255
 #define PI 3.14
+#define MAX_SER_NODES 1024
+
 int test_(){
 	void test_color_init()
 	{
@@ -102,6 +104,23 @@ int test_(){
 		assert_(tail == &n3, "tail didnt change");
 		assert_(tail->next == &n1, "tail->next isnt head.");
 		
+	}
+	void test_generate_sin_cycle_list()
+	{
+		struct node* head;
+		struct node* tail;
+		colorlist_init(&head, &tail);
+		float wavelength = 10.0;
+		int start = 0;
+		int end = 255;
+		generate_sin_cycle_list(&head, &tail, wavelength, start, end);
+		
+		assert_(head!=NULL, "head is still NULL.");
+		assert_(tail!=NULL, "tail is still NULL.");
+		assert_(head!=tail, "head is tail.");
+		
+		if(head!=NULL && tail!=NULL)
+			colorlist_free(&tail);
 		
 	}
 	test_color_init();
@@ -175,6 +194,7 @@ void colorlist_free(struct node** tail)
 	{
 		if(*c!=NULL)
 		{
+			free((*c)->data);
 			colorlist_free( &((*c)->next) );
 			free(*c);
 			*c = NULL;
@@ -195,7 +215,7 @@ int assert_(bool statement, const char* error)
 	if(statement)
 	{
 		printf("AssertPass\n");
-		
+	
 		return 1;
 	}
 	printf("AssertFail: %s\n", error);
@@ -235,7 +255,37 @@ int sin_color_cycle(float time, float wavelength, int start, int end)
 	return (int)amplitude*((1+offset)+sin(rad));
 }
 
-void generate_sin_cycle_list(struct node** head, struct node** tail, float time, float wavelength, int start, int end)
+void generate_sin_cycle_list(struct node** head, struct node** tail, float wavelength, int start, int end, int delay_ns)
 {
+	
 	//TODO
+	if(head!=NULL && tail!=NULL)
+	{
+		//make sure they were recently initialized
+		if(*head==NULL && *tail==NULL)
+		{
+			float time_step = delay_ns / 1000000000.0;
+			float time = 0.0;
+			while (time < wavelength)
+			{
+				struct node* n = (node*)malloc(sizeof(node));
+				n->data = (color*)malloc(sizeof(color));
+				n->next = NULL;
+				
+				color_init(n->data);
+				color_set_green(n->data, sin_color_cycle(time, wavelength, start, end));
+				
+				colorlist_add(head, tail, n);
+				
+				time+=time_step;
+				
+			}
+		}
+	}
+}
+
+
+void save_cycle_list(struct node** head, struct node** tail)
+{
+	
 }

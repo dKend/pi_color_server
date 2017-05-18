@@ -15,13 +15,13 @@ void color_set_brightness(color* c, unsigned int value);
 void color_set_delay(color* c, unsigned int value);
 
 typedef struct node{
-	color data;
+	color* data;
 	struct node* next;
 } node;
 
 void colorlist_init(struct node** head, struct node** tail);
 void colorlist_add(struct node** head, struct node** tail, struct node* n);
-void colorlist_free(struct node** head);
+void colorlist_free(struct node** tail);
 
 int assert_(bool statement, const char* error);
 int assert_false(bool statement, const char* error);
@@ -29,4 +29,5 @@ int test_();
 
 int sin_cycle(float time, float wavelength);
 int sin_color_cycle(float time, float wavelength, int start, int end);
-void generate_sin_cycle_list(struct node** head, struct node** tail, float time, float wavelength, int start, int end);
+void generate_sin_cycle_list(struct node** head, struct node** tail, float wavelength, int start, int end);
+void save_cycle_list(struct node** head, struct node** tail);

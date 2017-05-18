@@ -79,9 +79,12 @@ int test_(){
 	{
 		struct node* head;
 		struct node* tail;
-		struct node n1 = {{100, 200, 10, 0, 100}, NULL};
-		struct node n2 = {{100, 200, 10, 0, 100}, NULL};
-		struct node n3 = {{100, 200, 10, 0, 100}, NULL};
+		struct color1 = {100, 200, 10, 0, 100};
+		struct color2 = {100, 200, 10, 0, 100};
+		struct color3 = {100, 200, 10, 0, 100};
+		struct node n1 = {&color1, NULL};
+		struct node n2 = {&color2, NULL};
+		struct node n3 = {&color3, NULL};
 		colorlist_init(&head, &tail);
 		
 		colorlist_add(&head, &tail, &n1);
@@ -113,7 +116,8 @@ int test_(){
 		float wavelength = 10.0;
 		int start = 0;
 		int end = 255;
-		generate_sin_cycle_list(&head, &tail, wavelength, start, end);
+		int delay_ns = 50000000;
+		generate_sin_cycle_list(&head, &tail, wavelength, start, end, );
 		
 		assert_(head!=NULL, "head is still NULL.");
 		assert_(tail!=NULL, "tail is still NULL.");

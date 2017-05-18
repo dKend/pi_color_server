@@ -79,9 +79,9 @@ int test_(){
 	{
 		struct node* head;
 		struct node* tail;
-		struct color color1 = {100, 200, 10, 0, 100};
-		struct color color2 = {100, 200, 10, 0, 100};
-		struct color color3 = {100, 200, 10, 0, 100};
+		color color1 = {100, 200, 10, 0, 100};
+		color color2 = {100, 200, 10, 0, 100};
+		color color3 = {100, 200, 10, 0, 100};
 		struct node n1 = {&color1, NULL};
 		struct node n2 = {&color2, NULL};
 		struct node n3 = {&color3, NULL};

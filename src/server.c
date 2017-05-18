@@ -285,7 +285,7 @@ void listen_loop2()
 							close(sock2);
 							break;
 					}
-					printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
+					//printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
 					if(colorchanged==1)
 					{
 						set_PWM_dutycycle(pi, RED_PIN, r);

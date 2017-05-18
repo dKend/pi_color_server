@@ -82,9 +82,9 @@ int test_(){
 		struct color color1 = {100, 200, 10, 0, 100};
 		struct color color2 = {100, 200, 10, 0, 100};
 		struct color color3 = {100, 200, 10, 0, 100};
-		struct color node n1 = {&color1, NULL};
-		struct color node n2 = {&color2, NULL};
-		struct color node n3 = {&color3, NULL};
+		struct node n1 = {&color1, NULL};
+		struct node n2 = {&color2, NULL};
+		struct node n3 = {&color3, NULL};
 		colorlist_init(&head, &tail);
 		
 		colorlist_add(&head, &tail, &n1);

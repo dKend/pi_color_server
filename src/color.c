@@ -131,6 +131,7 @@ int test_(){
 	test_set_delay();
 	test_colorlist_init();
 	test_colorlist_add();
+	test_generate_sin_cycle_list();
 	return 0;
 }
 void color_init(color* c)

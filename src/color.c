@@ -117,7 +117,7 @@ int test_(){
 		int start = 0;
 		int end = 255;
 		int delay_ns = 50000000;
-		generate_sin_cycle_list(&head, &tail, wavelength, start, end, );
+		generate_sin_cycle_list(&head, &tail, wavelength, start, end, delay_ns);
 		
 		assert_(head!=NULL, "head is still NULL.");
 		assert_(tail!=NULL, "tail is still NULL.");

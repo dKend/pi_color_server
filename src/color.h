@@ -22,6 +22,18 @@ typedef struct node{
 void colorlist_init(struct node** head, struct node** tail);
 void colorlist_add(struct node** head, struct node** tail, struct node* n);
 void colorlist_free(struct node** tail);
+void colorlist_print(struct node* head, struct node* tail);
+
+typedef struct {
+	unsigned int pin;
+	unsigned int value;
+	unsigned int delay_ns;
+} color2
+
+void color2_init(color2* c);
+void color2_set(color2* c, unsigned int value);
+void color2_set_pin(color2* c, unsigned int value);
+void color2_set_delay(color2* c, unsigned int value);
 
 int assert_(bool statement, const char* error);
 int assert_false(bool statement, const char* error);

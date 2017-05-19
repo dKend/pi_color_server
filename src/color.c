@@ -123,6 +123,8 @@ int test_(){
 		assert_(tail!=NULL, "tail is still NULL.");
 		assert_(head!=tail, "head is tail.");
 		
+		colorlist_print(head, tail);
+		
 		if(head!=NULL && tail!=NULL)
 			colorlist_free(&tail);
 		
@@ -289,8 +291,39 @@ void generate_sin_cycle_list(struct node** head, struct node** tail, float wavel
 	}
 }
 
-
-void save_cycle_list(struct node** head, struct node** tail)
+void colorlist_print(struct node* head, struct node* tail)
 {
-	
+	if(head!=NULL && tail!=NULL)
+	{
+		tail->next = NULL;
+		struct node* current = head;
+		
+		while(current != NULL)
+		{
+			printf("{red: %d, green: %d, blue: %d, bright: %d, delay: %d}\n", (current->data)->red, (current->data)->green, (current->data)->blue, (current->data)->brightness, (current->data)->delay);
+			printf("\t\t|\n");
+			printf("\t\tV\n");
+			current = current->next;
+		}
+	}	
+	tail->next = head;
+}
+
+void color2_init(color2* c)
+{
+	color2_set(c, 0);
+	color2_set_delay(c, 1000);
+}
+void color2_set(color2* c, unsigned int v)
+{
+	if(v <= MAX_COLOR)
+		c->value = v;
+}
+void color2_set_delay(color2* c, unsigned int v)
+{
+	c->delay_ns = v;
+}
+void color2_set_pin(color2* c, unsigned int v)
+{
+	c->pin = v;
 }

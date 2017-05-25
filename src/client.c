@@ -5,7 +5,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-int establish_connection();
+#include "client.h"
+
 /*
 	COMMANDS:
 	0	none (unused)
@@ -17,50 +18,74 @@ int establish_connection();
 		
 	
 */
-int main(int argc, const char* argv[])
+
+
+
+int client_handle_input(int argc, const char* argv[])
 {
+	int command = -1;
 	if(argc >= 2)
 	{		
-			int command;
-			if(strcmp(argv[1], "halt")==0)
+		
+		if(strcmp(argv[1], "-halt")==0 || strcmp(argv[1], "-h")==0 )
+		{
+			command = 1;
+			int sock = establish_connection();
+			if(sock !=-1)
 			{
-				command = 1;
+				write(sock, &command, sizeof(int));
+				close(sock);
+			}
+			//do things
+		}
+		else if(strcmp(argv[1], "-stclr")==0 || strcmp(argv[1], "-sc")==0)
+		{
+			command = 2;
+			if(argc >= 5)
+			{
+				//arguments beyond the 5th are ignored by this command
 				int sock = establish_connection();
-				if(sock !=-1)
+				if(sock!=-1)
 				{
+					const int red = atoi(argv[2]);
+					const int green = atoi(argv[3]);
+					const int blue = atoi(argv[4]);
+					
 					write(sock, &command, sizeof(int));
+					write(sock, &red, sizeof(int));
+					write(sock, &green, sizeof(int));
+					write(sock, &blue, sizeof(int));
+					
 					close(sock);
 				}
-				//do things
 			}
-			else if(strcmp(argv[1], "stclr")==0)
+		}
+		else if(strcmp(argv[1], "-getcolor") == 0)
+		{
+			command = 4;
+			int sock = establish_connection();
+			if(sock!=-1)
 			{
-				command = 2;
-				if(argc >= 5)
-				{
-					//arguments beyond the 5th are ignored by this command
-					int sock = establish_connection();
-					if(sock!=-1)
-					{
-						const int red = atoi(argv[2]);
-						const int green = atoi(argv[3]);
-						const int blue = atoi(argv[4]);
-						
-						write(sock, &command, sizeof(int));
-						write(sock, &red, sizeof(int));
-						write(sock, &green, sizeof(int));
-						write(sock, &blue, sizeof(int));
-						
-						close(sock);
-					}
-				}
+				int red;
+				int green;
+				int blue;
+				
+				write(sock, &command, sizeof(int));
+				read(sock, &red, sizeof(int));
+				read(sock, &green, sizeof(int));
+				read(sock, &blue, sizeof(int));
+				
+				close(sock);
+				
+				printf("{red: %d, green: %d, blue: %d}\n", red, green, blue);
 			}
-			else
-			{
-				printf("\n%s: invalid command\n", argv[0]);
-			}
+		}
+		else
+		{
+			printf("\n%s: invalid command\n", argv[1]);
+		}
 	}
-	return 0;
+	return command;
 }
 
 int establish_connection()

@@ -7,3 +7,5 @@ client.o: client.c
 cln:
 	rm pcs
 	rm *.o
+
+	

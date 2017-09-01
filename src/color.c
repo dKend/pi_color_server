@@ -8,6 +8,7 @@
 #define MAX_COLOR 255
 #define PI 3.14
 #define MAX_SER_NODES 1024
+//static int NXT_TID = 0;
 
 int test_(){
 	void test_color_init()
@@ -127,8 +128,18 @@ int test_(){
 		
 		if(head!=NULL && tail!=NULL)
 			colorlist_free(&tail);
+	}
+	
+	void test_save_cycle()
+	{
 		
 	}
+	
+	void test_load_cycle()
+	{
+		
+	}
+	
 	test_color_init();
 	test_set_red();
 	test_set_green();
@@ -138,7 +149,11 @@ int test_(){
 	test_colorlist_init();
 	test_colorlist_add();
 	test_generate_sin_cycle_list();
+	
+	test_save_cycle();
+	test_load_cycle();
 	return 0;
+	
 }
 void color_init(color* c)
 {
@@ -251,15 +266,15 @@ int sin_color_cycle(float time, float wavelength, int start, int end)
 	float midpoint = (start + end)/2;
 	float amplitude = (end - start)/2;
 	
-	if(amplitude == 0)
+	if(amplitude == 0 || wavelength == 0)
 	{
 		return -1;
 	}
 	
-	float offset = (midpoint/amplitude) - 1.0;
-	float rad = ((2*PI)*time)/wavelength;
-	
-	return (int)amplitude*((1+offset)+sin(rad));
+	float offset = (midpoint/amplitude);
+	float rad = (((2*PI)*time)/wavelength)+((3*PI)/2);
+	//printf("%f\n", rad);
+	return (int)amplitude*((offset)+sin(rad));
 }
 
 void generate_sin_cycle_list(struct node** head, struct node** tail, float wavelength, int start, int end, int delay_ns)
@@ -307,23 +322,4 @@ void colorlist_print(struct node* head, struct node* tail)
 		}
 	}	
 	tail->next = head;
-}
-
-void color2_init(color2* c)
-{
-	color2_set(c, 0);
-	color2_set_delay(c, 1000);
-}
-void color2_set(color2* c, unsigned int v)
-{
-	if(v <= MAX_COLOR)
-		c->value = v;
-}
-void color2_set_delay(color2* c, unsigned int v)
-{
-	c->delay_ns = v;
-}
-void color2_set_pin(color2* c, unsigned int v)
-{
-	c->pin = v;
 }

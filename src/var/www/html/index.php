@@ -1,18 +1,18 @@
-<!DOCTYPE html>
-<html>
-<body>
 <?php
 	//not the same for every system
 	// 4 is integer byte length (32-bit unsigned integer) on raspberry pi model b using raspbian OS
 	$INT_BYTES = 4;
-	
+	connectToColorServer();
+	get
 	function getColor(resource $sock)
 	{
 		socket_write($sock,pack("I", $INT_BYTES));
 		$r = unpack(socket_read($sock, $INT_BYTES));
 		$g = unpack(socket_read($sock, $INT_BYTES));
 		$b = unpack(socket_read($sock, $INT_BYTES));
-		
+		echo $r."<br>";
+		echo $g."<br>";
+		echo $b."<br>";
 	}
 	
 	function connectToColorServer()
@@ -31,11 +31,16 @@
 			}
 		}else
 		{
-			echo "Directory Change Failed."
+			echo "Directory Change Failed.";
 		}
 		return(false);
 	}
 ?>
+
+<!DOCTYPE html>
+<html>
+<body>
+
 	<form id = "rgb_sliders" method = "GET" action="handleColor.php">
 		R: <input name = "red" type = "range" min = "0" max = "255"/><br>
 		G: <input name = "green" type = "range" min = "0" max = "255"/><br>

@@ -25,6 +25,7 @@ void fork_child_task(int pi);
 int process_request(int pi, int sock);
 void server_tests();
 int fork_cycle(int pi, int tr, int tg, int tb, float wavelength, int ns_delay, int id);
+int log_output(const char * str, FILE* log);
 
 /*
 		command state
@@ -43,7 +44,7 @@ int main(int argc, const char* argv[])
 {
 	if(argc >= 2)
 	{
-		//create a binary code for each different argumant so we can use a switch/case statement here.
+		//create a binary code for each different argument so we can use a switch/case statement here.
 		if(strcmp(argv[1], "-c")==0) //run cycle through console
 		{
 			int pi = pigpio_start(NULL, NULL);
@@ -154,6 +155,7 @@ int main(int argc, const char* argv[])
 	{
 		listen_loop();
 	}
+	
 	return 0;
 }
 int process_request(int pi, int sock)
@@ -572,4 +574,11 @@ void listen_loop2(int pi)
 		
 	}
 	fclose(log);
+}
+
+int log_output(const char * str, FILE* log)
+{
+	int ret = strlen(s);
+	fwrite(str, sizeof(char), ret, log);
+	return ret;
 }

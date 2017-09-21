@@ -3,6 +3,7 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+	<h1>Le Porn</h1>
 	<table class="layout">
 	<?php
 		$PAGE_NUM = $_GET["page"];
@@ -15,9 +16,9 @@
 		
 		$MAX_INDEX = $PAGE_NUM * $MAX_PER_PAGE;
 		$MIN_INDEX = ( $PAGE_NUM - 1 ) * $MAX_PER_PAGE;
-		$FILES = glob("*.*");
+		$FILES = glob("*.{jpg,png,gif}", GLOB_BRACE);
 		$files_count = count($FILES);
-		$MAX_PAGES = ($files_count/$MAX_PER_PAGE) + 1;
+		$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
 
 		if($MAX_INDEX > $files_count){
 			$MAX_INDEX = $files_count;
@@ -32,22 +33,32 @@
 		//echo "$index <br> $MIN_INDEX <br> $MAX_INDEX";
 		
 		while($index < $MAX_INDEX) {
+			$count1 = 0;
+			$count1Max=5;
+			echo "<tr>";
+			while($count1 < $count1Max && $index < $MAX_INDEX)
+			{
+				$entry = $FILES[$index];
+				$tmp = "http://$_SERVER[HTTP_HOST]/porn/$entry";
+				echo "<td><a href=\"$tmp\">$index<img class=\"preview\" src=\"$entry\" ></a></td>";
+				$count1 = $count1 + 1;
+				$index = $index + 1;
+			}
+			echo "</tr>";
 			
-			$entry = $FILES[$index];
-			$tmp = "http://$_SERVER[HTTP_HOST]/porn/$entry";
-			echo "<tr><td><a href=\"$tmp\">$index<img class=\"preview\" src=\"$entry\" ></a></td></tr>";
-			$index = $index + 1;
 			
 		}
 		
 		//navigation
-		echo "<tr>";
+		$wSize = 10;
+		echo "</table>";
+		echo "<div class=\"center\">";
 		if($PAGE_NUM > 1)
 		{
 			$prevPage=$PAGE_NUM-1;
-			echo "<td><a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$prevPage\">Prev</a></td>";
+			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$prevPage\"><<</a>";
 		}
-		echo "<td><a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=1\">First</a></td>";
+		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=1\"> First</a>";
 		if($PAGE_NUM <= ($wSize/2)) 
 		{
 			$count = 1;
@@ -55,38 +66,39 @@
 			{
 				if($count != $PAGE_NUM)
 				{
-					echo "<td><a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\">$count</a></td>";
+					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\"> $count</a>";
 				}else
 				{
-					echo "<td>$count</td>";
+					echo " $count";
 				}
 				$count = $count + 1;
 			}
 		}else if($PAGE_NUM >= ($wSize/2))
 		{
 			$count = $PAGE_NUM - ($wSize/2);
-			while($count < ($wSize) && $count < $MAX_PAGES) 
+			$tmp = $PAGE_NUM + ($wSize/2);
+			while($count < ($tmp) && $count < $MAX_PAGES) 
 			{
 				if($count != $PAGE_NUM)
 				{
-					echo "<td><a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\">$count</a></td>";
+					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\"> $count</a>";
 				}else
 				{
-					echo "<td>$count</td>";
+					echo " $count";
 				}
 				$count = $count + 1;
 			}
 		}
-		echo "<td>><a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$MAX_PAGES\">Last</a></td>";
-		echo "<td>";
+		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$MAX_PAGES\"> Last</a>";
+		
 		if($PAGE_NUM < $MAX_PAGES)
 		{
 			$nextPage=$PAGE_NUM+1;
-			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$nextPage\">Next</a>";
+			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$nextPage\"> >></a>";
 		}
-		echo "</td></tr>";
+		echo "</div>";
 		
 	?>
-	</table>
+	
 </body>
 </html>

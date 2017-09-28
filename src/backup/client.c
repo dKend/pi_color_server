@@ -18,11 +18,7 @@
 		
 	
 */
-int main(int argc, const char* argv[])
-{
-	client_handle_input(argc, argv);
-	return 0;
-}
+
 
 
 int client_handle_input(int argc, const char* argv[])
@@ -83,6 +79,77 @@ int client_handle_input(int argc, const char* argv[])
 				close(sock);
 				
 				printf("{red: %d, green: %d, blue: %d}\n", red, green, blue);
+			}
+		}else if(strcmp(argv[1], "-st")==0)
+		{
+			if(argc >= 4)
+			{
+				command = 6;
+				int sock = establish_connection();
+				if(sock!=-1)
+				{
+					int num = (int) *(argv[2]);
+					int val = atoi(argv[3]);
+					write(sock, &command, sizeof(int));
+					write(sock, &num, sizeof(int));
+					write(sock, &val, sizeof(int));
+					close(sock);
+				}	
+			}
+			
+		}else if(strcmp(argv[1], "-tar")==0)
+		{
+			if(argc >= 5)
+			{
+				command = 8;
+				int sock = establish_connection();
+				if(sock!=-1)
+				{
+					const int red = atoi(argv[2]);
+					const int green = atoi(argv[3]);
+					const int blue = atoi(argv[4]);
+					write(sock, &command, sizeof(int));
+					write(sock, &red, sizeof(int));
+					write(sock, &green, sizeof(int));
+					write(sock, &blue, sizeof(int));
+					
+					close(sock);
+				}
+
+			}
+		}else if(strcmp(argv[1], "-scyc")==0)
+		{
+			command = 9;
+			int sock = establish_connection();
+			if(sock!=-1)
+			{
+				write(sock, &command, sizeof(int));
+				close(sock);
+			}
+		}else if(strcmp(argv[1], "-new")==0)
+		{
+			if(argc >= 7)
+			{
+				command = 11;
+				int sock = establish_connection();
+				if(sock != -1)
+				{
+					
+					const int tr = atoi(argv[2]);
+					const int tg = atoi(argv[3]);
+					const int tb = atoi(argv[4]);
+					const float wl = atof(argv[5]);
+					const int delay = atoi(argv[6]);
+					
+					write(sock, &command, sizeof(int));
+					write(sock, &tr, sizeof(int));
+					write(sock, &tg, sizeof(int));
+					write(sock, &tb, sizeof(int));
+					write(sock, &wl, sizeof(float));
+					write(sock, &delay, sizeof(int));
+					close(sock);
+					
+				}
 			}
 		}
 		else

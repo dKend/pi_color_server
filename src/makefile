@@ -1,11 +1,4 @@
-main: color.o client.o
-	gcc -Wall -pthread color.o -lm client.o -o pcs server.c -lpigpiod_if2 -lrt
-color.o: color.c
-	gcc -Wall -c color.c
-client.o: client.c
-	gcc -Wall -c client.c
-cln:
-	rm pcs
-	rm *.o
-
-	
+main: client
+	gcc -Wall -pthread -o pcs-server server.c -lpigpiod_if2 -lrt
+client: client.c
+	gcc -Wall -o pcs-client client.c

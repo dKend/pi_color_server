@@ -16,7 +16,7 @@
 		
 		$MAX_INDEX = $PAGE_NUM * $MAX_PER_PAGE;
 		$MIN_INDEX = ( $PAGE_NUM - 1 ) * $MAX_PER_PAGE;
-		$FILES = glob("*.{jpg,png,gif}", GLOB_BRACE);
+		$FILES = glob("porn/*.{jpg,png,gif}", GLOB_BRACE);
 		$files_count = count($FILES);
 		$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
 
@@ -39,7 +39,7 @@
 			while($count1 < $count1Max && $index < $MAX_INDEX)
 			{
 				$entry = $FILES[$index];
-				$tmp = "http://$_SERVER[HTTP_HOST]/porn/$entry";
+				$tmp = "http://$_SERVER[HTTP_HOST]/$entry";
 				echo "<td><a href=\"$tmp\">$index<img class=\"preview\" src=\"$entry\" ></a></td>";
 				$count1 = $count1 + 1;
 				$index = $index + 1;
@@ -56,9 +56,9 @@
 		if($PAGE_NUM > 1)
 		{
 			$prevPage=$PAGE_NUM-1;
-			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$prevPage\"><<</a>";
+			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=$prevPage\"><<</a>";
 		}
-		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=1\"> First</a>";
+		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=1\"> First</a>";
 		if($PAGE_NUM <= ($wSize/2)) 
 		{
 			$count = 1;
@@ -66,7 +66,7 @@
 			{
 				if($count != $PAGE_NUM)
 				{
-					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\"> $count</a>";
+					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=$count\"> $count</a>";
 				}else
 				{
 					echo " $count";
@@ -81,7 +81,7 @@
 			{
 				if($count != $PAGE_NUM)
 				{
-					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$count\"> $count</a>";
+					echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=$count\"> $count</a>";
 				}else
 				{
 					echo " $count";
@@ -89,12 +89,12 @@
 				$count = $count + 1;
 			}
 		}
-		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$MAX_PAGES\"> Last</a>";
+		echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=$MAX_PAGES\"> Last</a>";
 		
 		if($PAGE_NUM < $MAX_PAGES)
 		{
 			$nextPage=$PAGE_NUM+1;
-			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/porndex.php?page=$nextPage\"> >></a>";
+			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porndex.php?page=$nextPage\"> >></a>";
 		}
 		echo "</div>";
 		

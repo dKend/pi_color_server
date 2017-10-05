@@ -2,6 +2,7 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="style.css">
+<meta charset="UTF-8">
 </head>
 <body>
 <?php
@@ -20,10 +21,6 @@
 	if($colorData == false)
 	{
 		echo "Failed to load color data from pcs.<br>";
-	}
-	else
-	{
-		var_dump($colorData);
 	}
 	echo "</div>";
 	
@@ -45,72 +42,50 @@
 	
 	function getColor()
 	{
-		$sock = connectToColorServer();
-		if ($sock == false)
-		{
-			return(false);
-		}
-		else
-		{
-			socket_write($sock, pack("I", 4));
-			$r = unpack(socket_read($sock, $INT_BYTES));
-			$g = unpack(socket_read($sock, $INT_BYTES));
-			$b = unpack(socket_read($sock, $INT_BYTES));
-			socket_close($sock);
-			$ret = [
-				"r" => $r,
-				"g" => $g,
-				"b" => $b,
-				
-			];
-			return($ret);
-		}
+		$rv = 0;
+		$dummy = "";
+		chdir("/home/dhk/pcs_test_4");
+		
+		$r = 0;
+		$g = 0;
+		$b = 0;
+		
+		exec("./pcs-client -getred", $dummy, $r);
+		exec("./pcs-client -getgreen", $dummy, $g);
+		exec("./pcs-client -getblue", $dummy, $b);
 		
 		
+		$ret = [
+			"r" => $r,
+			"g" => $g,
+			"b" => $b,
+			
+		];
+		
+		return($ret);
 	}
 	
 	function connectToColorServer()
 	{
-		if(chdir("/"))
-		{
-			echo "Directory changed Successfully.";
-			$sock = socket_create(AF_UNIX, SOCK_STREAM);
-			if($sock == false)
-			{
-				echo "Socket creation failed.";
-			}else
-			{
-				socket_connect($sock, "colorserver", 0);
-				return($sock);
-			}
-		}else
-		{
-			echo "Directory Change Failed.";
-		}
-		return(false);
+		
+		$timeOut = 10;
+		$sock = stream_socket_client("unix:///home/dhk/pcs_test_4/colorserver", $errorno,$errorstr,$timeOut);
+		stream_set_timeout($sock, $timeOut);
+		return($sock);
 	}
 	
 	function serverStatus()
 	{
-		//server status code
-		return(false);
+		$ret = false;
+		if(file_exists("/home/dhk/pcs_test_4/colorserver"))
+			$ret=true;
+		return($ret);
 	}
-	function getTarget()
+	function println($string)
 	{
-		return(false);
+		echo $string . "<br>";
 	}
-	function isCycle()
-	{
-		return(false);
-	}
-	function startCycle()
-	{
-		return(false);
-	}
-	function stopCycle()
-	{
-		return(false);
-	}
+	
 ?>
 	<form id = "rgb_sliders" method = "GET" action="handleColor.php">
 		R: <input name = "red" type = "range" min = "0" max = "255"/><br>
@@ -119,24 +94,6 @@
 		<input name = "setTarget" type = "radio" defaultValue = "off"/>Set Cycle Color<br>
 		<input name = "stclr" type = "submit"/><br>
 	</form>
-	<?php
-	
-		//do server status/control stuff
-		echo  $PCS_CONTROL_STRING.$TABLE_OPEN;
-		$status = serverStatus();
-		if($status == false)
-		{
-			echo "<tr><td>Server Offline</td></tr>";
-			echo "<tr><td><input type = \"submit\" id = \"START\" value = \"Start Server\"></td></tr>";
-		}
-		else
-		{
-			echo "<tr><td>Server Online</td></tr>";
-			echo "<tr><td><input type = \"submit\" id = \"STOP\" value = \"Stop Server\"></td></tr>";
-		}
-		echo "</table></form>";
-		
-	?>
 </body>
 </html>
 

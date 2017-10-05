@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <errno.h>
 
 #include "client.h"
 
@@ -20,14 +21,15 @@
 */
 int main(int argc, const char* argv[])
 {
-	client_handle_input(argc, argv);
-	return 0;
+	int ret = client_handle_input(argc, argv);
+	printf("ret: %d\n", ret);
+	return ret;
 }
 
 
 int client_handle_input(int argc, const char* argv[])
 {
-	chdir("/");
+	int ret = 0;
 	int command = -1;
 	if(argc >= 2)
 	{		
@@ -83,6 +85,69 @@ int client_handle_input(int argc, const char* argv[])
 				close(sock);
 				
 				printf("{red: %d, green: %d, blue: %d}\n", red, green, blue);
+				
+				int r = red << 16;
+				int g = green << 8;
+				
+				ret = r|g|blue;
+				printf("r: %d\ng: %d\nb: %d\nret: %d\n", r, g, blue, ret);
+			}
+		}
+		else if(strcmp(argv[1], "-getred") == 0)
+		{
+			command = 5;
+			int sock = establish_connection();
+			if(sock!=-1)
+			{
+				int red;
+				
+				write(sock, &command, sizeof(int));
+				read(sock, &red, sizeof(int));
+				
+				close(sock);
+				
+				printf("{red: %d}\n", red);
+				
+				ret = red;
+				printf("r: %d\n", red);
+			}
+		}
+		else if(strcmp(argv[1], "-getgreen") == 0)
+		{
+			command = 6;
+			int sock = establish_connection();
+			if(sock!=-1)
+			{
+				int green;
+				
+				write(sock, &command, sizeof(int));
+				read(sock, &green, sizeof(int));
+				
+				close(sock);
+				
+				printf("{green: %d}\n", green);
+				
+				ret = green;
+				printf("g: %d\n", green);
+			}
+		}
+		else if(strcmp(argv[1], "-getblue") == 0)
+		{
+			command = 7;
+			int sock = establish_connection();
+			if(sock!=-1)
+			{
+				int blue;
+				
+				write(sock, &command, sizeof(int));
+				read(sock, &blue, sizeof(int));
+				
+				close(sock);
+				
+				printf("{blue: %d}\n", blue);
+				
+				ret = blue;
+				printf("r: %d\n", blue);
 			}
 		}
 		else
@@ -90,7 +155,7 @@ int client_handle_input(int argc, const char* argv[])
 			printf("\n%s: invalid command\n", argv[1]);
 		}
 	}
-	return command;
+	return ret;
 }
 
 int establish_connection()
@@ -107,7 +172,7 @@ int establish_connection()
 	{
 		if(connect(sock, &name, namelen)==-1)
 		{
-			printf("\nerror: connection to server failed.");
+			printf("error: connection to server failed. ERRNO:%d\n", errno);
 			sock = -1;
 		}
 		

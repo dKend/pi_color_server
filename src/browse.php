@@ -6,9 +6,6 @@
 	<h1>Le Porn</h1>
 	<table class="layout">
 	<?php
-		$PAGE_NUM = $_GET["page"];
-		$QUERY = $_GET["search"];
-		$MAX_PER_PAGE = 25;
 		
 		function buildGlobBrace($searchParams)
 		{
@@ -23,13 +20,12 @@
 			$ret = sprintf("{%s}", $ret);
 			return($ret);
 		}
-		
 		function getFilenames($searchParams)
 		{
 			$ret = -1;
 			if($searchParams == NULL)
 			{
-				return(glob("porn/*.{jpg,png,gif}", GLOB_BRACE));
+				return(glob($DFT_PATH."*.{jpg,png,gif}", GLOB_BRACE));
 			}else
 			{
 				$indices = glob("tags/*.".buildGlobBrace($searchParams), GLOB_BRACE);
@@ -40,6 +36,13 @@
 					$ret[$i] = file_get_contents($indices[$i]);
 				}
 			}
+		}
+		function buildPage()
+		{
+			$PAGE_NUM = $_GET["page"];
+			$QUERY = $_GET["search"];
+			$MAX_PER_PAGE = 25;
+			$DFT_PATH = "porn/";
 		}
 		echo "<tr><td><form method=\"get\" action=\"browse.php\"><input type=\"text\" name=\"search\" placeholder=\"Search...\"><input type=\"submit\"></form></td></tr>";
 		if($QUERY !== NULL)
@@ -52,7 +55,7 @@
 			
 			$MAX_INDEX = $PAGE_NUM * $MAX_PER_PAGE;
 			$MIN_INDEX = ( $PAGE_NUM - 1 ) * $MAX_PER_PAGE;
-			$FILES = glob("porn/*.{jpg,png,gif}", GLOB_BRACE);
+			$FILES = glob($DFT_PATH."*.{jpg,png,gif}", GLOB_BRACE);
 			$files_count = count($FILES);
 			$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
 
@@ -76,7 +79,7 @@
 				{
 					$entry = $FILES[$index];
 					$tmp = "http://$_SERVER[HTTP_HOST]/$entry";
-					echo "<td><a href=\"$tmp\"><img class=\"preview\" src=\"$entry\" ></a></td>";
+					echo "<td><a href=\"$tmp\">$index<img class=\"preview\" src=\"$entry\" ></a></td>";
 					$count1 = $count1 + 1;
 					$index = $index + 1;
 				}

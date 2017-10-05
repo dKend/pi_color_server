@@ -71,94 +71,64 @@
 		}
 	}
 	
-	class FileIndexData {
-		public $filename;
-		public $index = -1;
-		
-	}
 	class Indexer {
 		
 		private $nextIndex = 0;
-		private $indexMap;
 		private $inPath;
 		private $outPath;
+		private $uploadEnabled = false;
+		private $uploadPath;
 		private $recycledIndicies;
-		private $hasGeneratedAllIndices = 0;
-		private $filetypes;
-		private $indices;
 		
-		function __construct($inPath, $outPath, $filetypes)
+		public function __construct($inPath, $outPath)
 		{
 			$this->inPath = $inPath;
 			$this->outPath = $outPath;
-			$this->filetypes = $filetypes;
 			$this->recycledIndicies = new Queue;
 		}
-		
-		function setInPath($inPath)
+		public function setInPath($inPath)
 		{
 			$this->inPath = $inPath;
 		}
-		
-		function setOutPath($outPath)
+		public function setOutPath($outPath)
 		{
 			$this->outPath = $outPath;
 		}
-		
-		function generateAllIndicies()
+		public function setUploadPath($uploadPath)
 		{
-			if( $this->hasGeneratedAllIndices == 0)
-			{
-				//mkdir($this->outPath);
-				if( is_dir($this->inPath) == true )
-				{
-					$dir = opendir($this->inPath);
-					if($dir)
-					{
-						while(($file = readdir($dir)) !== false)
-						{
-							//printf("%s\n", $file);
-							if(validateString($file, $this->filetypes))
-								$this->addNewIndex($file);
-							
-						}
-						closedir($dir);
-					}
-					
-				}
-				$this->hasGeneratedAllIndices = 1;
-			}
-			
-			return($this->nextIndex);
+			$this->uploadPath = $uploadPath;
 		}
-		
-		function addNewIndex($filename)
+		public function enableUpload()
+		{
+			$this->uploadEnabled = true;
+		}
+		public function disableUpload()
+		{
+			$this->uploadEnabled = false;
+		}
+		public function isUploadEnabled()
+		{
+			return($this->uploadEnabled);
+		}
+		public function getData($index)
+		{
+			
+		}
+		public function addIndex($filepath)
 		{
 			$ret = 0;
-			$index = $this->getNextIndex();
-			$md = new FileIndexData;
-			$md->filename = $filename;
-			$md->index = $index;
-			$this->indices[$index] = $md;
-			//printf("%d\n", $index);
 			
-			$ret = $index;
 			
 			return($ret);
 		}
-		
-		function deleteIndex($index)
+		public function deleteIndex($index)
 		{
-			$ret = 0;
-			if( $this->indexExists($index) )
-			{
-				addIndexToRecycle($index);
-			}
+			$ret = false;
+			
 			
 			return($ret);
 		}
-		
-		function getNextIndex()
+		public function getNextIndex()
 		{
 			$ret = -1;
 			if( $this->recycledIndicies->isEmpty() == true )
@@ -168,32 +138,13 @@
 			}
 			return($ret);
 		}
-		
-		function indexExists($index)
+		public function indexExists($index)
 		{
 			$ret = false;
-			if( $this->indices[$index] == NULL )
-			{
-				$ret = true;
-			}
+			
 			return($ret);
 		}
-		
-		function outputIndiciesToFile()
-		{
-			$i = 0;
-			$fileContents = "";
-			while($i < $this->nextIndex)
-			{
-				//printf("%d\n", $i);
-				//var_dump($this->indices[$i]);
-				$fileContents = sprintf("%s%d\t%s\n", $fileContents, $i, $this->indices[$i]->filename);
-				$i = $i + 1;
-			}
-			file_put_contents(sprintf("%s/debug.txt", $this->outPath), $fileContents);
-		}
-		
-		private function addIndexToRecycle($index)
+		private function recycleIndex($index)
 		{
 			$ret = 0;
 			if( indexExists($index) ) //the index needs to be occupied for it to be able to be reused. allowing indicies that have never been used could cause some data to be lost later on when the next index variable is the same as a value in the recycled reQueue
@@ -205,25 +156,69 @@
 			
 			return($ret);
 		}
-		
-		function createIndexFiles()
+		public function createIndexFile($filepath, $index)
 		{
-			$i = 0;
-			while($i<$this->nextIndex)
+			$ret = 0;
+			if($index>=0 && $index < $this->nextIndex)
 			{
-				if($this->indices[$i] !== NULL)
-				{
-					$fname = sprintf("%d", $this->indices[$i]->index);
-					str_pad($fname, 32, "0", STR_PAD_LEFT);
-					$name = sprintf("index/%s.ind", $fname);
-					file_put_contents($name, $this->indices[$i]->filename);
-					chmod($name, 0644);
-				}
-				$i = $i + 1;
-				
+				$fname = sprintf("%d", $index);
+				str_pad($fname, 16, "0", STR_PAD_LEFT);
+				$name = sprintf("index/%s.ind", $fname);
+				file_put_contents($name, $filepath);
+				chmod($name, 0644);
+				$ret = 1;
 			}
+			return($ret);
 		}
-		
+		public function loadIndexFile($index)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function createTagFile($index, $tag)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function loadTagFile($index)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function tagExists($tag)
+		{
+			$ret = false;
+			
+			return($ret);
+		}
+		public function createTag($string)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function addTag($index, $tag)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function removeTag($index, $tag)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+		public function deleteTag($tag)
+		{
+			$ret = 0;
+			
+			return($ret);
+		}
+	
 	}
 	
 	function loadData($path)

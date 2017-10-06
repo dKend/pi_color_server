@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 </head>
 <body>
+<a href="http://192.168.1.144/browse.php" >Le Porn</a>
 <?php
 	//not the same for every system
 	// 4 is integer byte length (32-bit unsigned integer) on raspberry pi model b using raspbian OS

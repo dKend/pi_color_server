@@ -52,7 +52,7 @@
 			
 			$MAX_INDEX = $PAGE_NUM * $MAX_PER_PAGE;
 			$MIN_INDEX = ( $PAGE_NUM - 1 ) * $MAX_PER_PAGE;
-			$FILES = glob($DFT_PATH."*.{jpg,png,gif}", GLOB_BRACE);
+			$FILES = glob($DFT_PATH."*.{jpg,png,gif,mp4}", GLOB_BRACE);
 			$files_count = count($FILES);
 			$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
 
@@ -125,12 +125,12 @@
 					$count = $count + 1;
 				}
 			}
-			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/search=$QUERY&page=$MAX_PAGES\"> Last</a>";
+			echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/?search=$QUERY&page=$MAX_PAGES\"> Last</a>";
 			
 			if($PAGE_NUM < $MAX_PAGES)
 			{
 				$nextPage=$PAGE_NUM+1;
-				echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/search=$QUERY&page=$nextPage\"> >></a>";
+				echo "<a href=\"http://$_SERVER[HTTP_HOST]/porn/?search=$QUERY&page=$nextPage\"> >></a>";
 			}
 			echo "</div>";
 		}

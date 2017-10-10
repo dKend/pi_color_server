@@ -117,7 +117,11 @@
 		public function addIndex($filepath)
 		{
 			$ret = 0;
-			
+			if(file_exists($filepath))
+			{
+				$index = $this->getNextIndex();
+				$ret = $this->createIndexFile($filepath, $index);
+			}
 			
 			return($ret);
 		}
@@ -135,22 +139,33 @@
 			{
 				$ret = $this->nextIndex;
 				$this->nextIndex = $this->nextIndex + 1;
+			}else
+			{
+				$ret = $this->recycledIndicies->deQueue();
 			}
 			return($ret);
 		}
 		public function indexExists($index)
 		{
 			$ret = false;
-			
+			if($index >= 0)
+			{
+				$path = $this->constructIndexString($index, 16);
+				$path = $this->outPath."/".$path.".ind";
+				if(file_exists($path));
+				{
+					$ret = true;
+				}
+			}
+				
 			return($ret);
 		}
-		private function recycleIndex($index)
+		public function recycleIndex($index)
 		{
 			$ret = 0;
-			if( indexExists($index) ) //the index needs to be occupied for it to be able to be reused. allowing indicies that have never been used could cause some data to be lost later on when the next index variable is the same as a value in the recycled reQueue
+			if( $this->indexExists($index) ) //the index needs to be occupied for it to be able to be reused. allowing indicies that have never been used could cause some data to be lost later on when the next index variable is the same as a value in the recycled reQueue
 			{
 				$this->recycledIndicies->reQueue($index);
-				$this->indices[$index] = NULL;
 				$ret = 1;
 			}
 			
@@ -159,57 +174,94 @@
 		public function createIndexFile($filepath, $index)
 		{
 			$ret = 0;
-			if($index>=0 && $index < $this->nextIndex)
+			
+			if($this->indexExists($index)===false)
 			{
-				$fname = sprintf("%d", $index);
-				str_pad($fname, 16, "0", STR_PAD_LEFT);
-				$name = sprintf("index/%s.ind", $fname);
+				$name = $this->constructIndexString($index, 16);
+				$name = $this->outPath."/".$name."ind";
+				if(file_exists($this->outPath) === false)
+					mkdir($this->outPath);
 				file_put_contents($name, $filepath);
-				chmod($name, 0644);
 				$ret = 1;
 			}
+			
 			return($ret);
 		}
 		public function loadIndexFile($index)
 		{
 			$ret = 0;
-			
+			if($this->indexExists($index))
+			{
+				$path = $this->constructIndexString($index, 16);
+				$path = $this->outPath."/".$path.".ind";
+				$ret = file_get_contents($path);
+			}
 			return($ret);
 		}
 		public function createTagFile($index, $tag)
 		{
 			$ret = 0;
-			
+			if($this->tagExists($tag))
+			{
+				$tmp = $this->constructIndexString($index, 16);
+				$tmp = $this->outPath."/tags/".$tmp.".".$tag;
+				
+				if(file_exists($this->outPath."/tags") === false)
+					mkdir($this->outPath."/tags");
+				if(file_exists($tmp) === false)
+					file_put_contents($tmp, "1");
+				
+				$ret = 1;
+			}
 			return($ret);
 		}
-		public function loadTagFile($index)
+		public function loadTagFile($filepath)
 		{
 			$ret = 0;
-			
+			if(file_exists($filepath))
+				$ret = file_get_contents($filepath);
 			return($ret);
 		}
 		public function tagExists($tag)
 		{
 			$ret = false;
-			
+			if($tag !== NULL)
+			{
+				$tmp = $this->outPath."/tags/MASTER.".$tag;
+				$ret = file_exists($tmp);
+			}
 			return($ret);
 		}
 		public function createTag($string)
 		{
 			$ret = 0;
-			
+			if($this->tagExists($string) === false)
+			{
+				$tmp = $this->outPath."/tags/MASTER.".$string;
+				file_put_contents($tmp);
+				$ret = 1;
+			}
 			return($ret);
 		}
 		public function addTag($index, $tag)
 		{
 			$ret = 0;
-			
+			if($this->indexExists($index))
+			{
+				$ret = $this->createTagFile($index, $tag);
+			}
 			return($ret);
 		}
 		public function removeTag($index, $tag)
 		{
 			$ret = 0;
-			
+			if($this->indexExists($index) && $this->tagExists($tag))
+			{
+				if($this->indexHasTag($index, $tag))
+				{
+					
+				}
+			}
 			return($ret);
 		}
 		public function deleteTag($tag)
@@ -218,7 +270,25 @@
 			
 			return($ret);
 		}
-	
+		public function constructIndexString($index, $len)
+		{
+			$ret = 0;
+			if($len > 0)
+			{
+				$ret = sprintf("%d", $index);
+				$ret = str_pad($ret, "0", $len);
+			}
+			return($ret);
+		}
+		public function indexHasTag($index, $tag)
+		{
+			$ret = false;
+			if($this->indexExists($index) && $this->tagExists($tag))
+			{
+				$ret = file_exists($this->outPath."/tags/".$this->constructIndexString($index).".".$tag);
+			}
+			return($ret);
+		}
 	}
 	
 	function loadData($path)

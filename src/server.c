@@ -9,7 +9,7 @@
 #include <time.h>
 #include <pigpiod_if2.h>
 #include <sys/stat.h>
-#include <signal.h>
+
 #include <dirent.h>
 #include <errno.h>
 

@@ -18,7 +18,7 @@ a>img {
 }
 
 table.layout {
-	width: 100%;
+	width: 50%;
 	height: 90%;
 	margin: auto;
 	top: 0;
@@ -27,20 +27,28 @@ table.layout {
 input[type=button], input[type=submit], input[type=reset] {
 	background-color: #f442c5;
     border: none;
-    color: black;
-    padding: 16px 32px;
+    color: #FFBAED;
     text-decoration: none;
     margin: 4px 2px;
     cursor: pointer;
+	height: 16px;
+}
+input[type=range]{
+	width: 75%;
+	background-color: #000000;
+	
 }
 
 body {
-	background-color: #DB85C5;
+	background-color: #202020;
 	font-family: Helvetica;
 	color: #FFBAED;
+	margin-left: 0px;
+	width: 100%;
+
 }
 h1 {
-	width: 100%;
+	width: 50%;
 	font-style: oblique;
 	text-align: center;
 	
@@ -51,10 +59,8 @@ a {
 	color: #FFBAED;
 }
 div.center {
-	padding-top: 40;
-	bottom: 0;
 	margin: auto;
-	width: 100%;
+	
 	text-align: center;
 }
 
@@ -63,6 +69,30 @@ td {
 }
 
 th {
-	width: 100%;
+	width: 50%;
 	text-align: center;
+}
+.center {
+	margin: auto;
+	width: 50%;
+	text-align: center;
+}
+div#formbox {
+	position: absolute;
+    width: 100%;
+    height: 90%;
+    background-color: #151515;
+    margin: auto;
+    text-align: center;
+	margin-left: 0px;
+}
+
+form#rgb_sliders {
+	width: 50%;
+	margin: auto;
+}
+
+form#pcs_control_panel {
+	width: 98%;
+	margin: auto;
 }

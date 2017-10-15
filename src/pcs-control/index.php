@@ -5,33 +5,35 @@
 <meta charset="UTF-8">
 </head>
 <body>
-<div id="formbox">
-<a href="http://192.168.1.144/porn/" >Le Porn</a>
 <?php
-	//not the same for every system
-	// 4 is integer byte length (32-bit unsigned integer) on raspberry pi model b using raspbian OS
-	$INT_BYTES = 4;
+	$baseLink = "http://$_SERVER[HTTP_HOST]/%s";
+	$link1 = sprintf($baseLink, "porn");
+	$link2 = sprintf($baseLink, "pcs-control");
+?>
+<div class="formbox">
+	<form id="pornlink" action=<?php echo "\"".$link1."\""; ?> method="GET">
+		<input class="topbar" type="submit" value = "Le Porn">
+	</form>
 	
-	//strings
-	
-	
-	//do debug stuff
+	<form id = "pcslink" action=<?php echo "\"".$link2."\""; ?> method="GET">
+		<input class="topbar" type="submit" value = "pcs-control">
+	</form>
+
+<?php
 	$colorData = getColor();
-	
-	
 	//do server status/control stuff
 	$status = serverStatus();
 	if($status == false)
 	{
 		echo "<form id = \"pcs_control_panel\" method = \"GET\" action=\"pcs-start.php\">";
 		echo "Server Offline<br>";
-		echo "<input type = \"submit\" id = \"START\" value = \"Start Server\"><br>";
+		echo "<input type = \"submit\" id = \"START\" value = \"Start Server\">";
 	}
 	else
 	{
 		echo "<form id = \"pcs_control_panel\" method = \"GET\" action=\"pcs-stop.php\">";
 		echo "Server Online<br>";
-		echo "<input type = \"submit\" id = \"STOP\" value = \"Stop Server\"></br>";
+		echo "<input  type = \"submit\" id = \"STOP\" value = \"Stop Server\">";
 	}
 	echo "</form>";
 	
@@ -68,6 +70,7 @@
 			$ret=true;
 		return($ret);
 	}
+	
 	function println($string)
 	{
 		echo $string . "<br>";
@@ -79,7 +82,6 @@
 			R: <input name = "red" type = "range" min = "0" max = "255" <?php echo "value = \"".$colorData["r"]."\""; ?>/><br>
 			G: <input name = "green" type = "range" min = "0" max = "255" <?php echo "value = \"".$colorData["g"]."\""; ?>/><br>
 			B: <input name = "blue" type = "range" min = "0" max = "255" <?php echo "value = \"".$colorData["b"]."\""; ?>/><br>
-			<input name = "setTarget" type = "radio" defaultValue = "off"/>Set Cycle Color<br>
 			<input name = "stclr" type = "submit"/><br>
 		</form>
 	</div>

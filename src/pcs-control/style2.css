@@ -1,5 +1,5 @@
 
-a>img {
+a>img.preview {
 	position: relative;
 	display: block;
 	border: 5px solid #CE55AF;
@@ -25,13 +25,13 @@ table.layout {
 }
 
 input[type=button], input[type=submit], input[type=reset] {
-	background-color: #f442c5;
+	background-color: #3c2d3d;
     border: none;
     color: #FFBAED;
-    text-decoration: none;
-    margin: 4px 2px;
+    text-decoration: italic;
+	padding-top: 4px;
+	padding-bottom: 4px;
     cursor: pointer;
-	height: 16px;
 }
 input[type=range]{
 	width: 75%;
@@ -77,22 +77,53 @@ th {
 	width: 50%;
 	text-align: center;
 }
-div#formbox {
+div.formbox {
 	position: absolute;
-    width: 100%;
+    width: 76%;
     height: 90%;
     background-color: #151515;
     margin: auto;
     text-align: center;
-	margin-left: 0px;
+	margin-left: 12%;
+	margin-right: 12%;
+}
+form {
+	position: absolute;
 }
 
 form#rgb_sliders {
 	width: 50%;
 	margin: auto;
+	margin-top: 7%;
+	background-color: #2b1b28;
+    margin-left: 2%;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 form#pcs_control_panel {
-	width: 98%;
-	margin: auto;
+	width: 50%;
+    margin: auto;
+    margin-top: 7%;
+    margin-left: 52%;
+}
+
+form#pornlink {
+	margin-top: 2%;
+	margin-left: -4%;
+	width: 25%;
+	
+}
+
+form#pcslink {
+	margin-top: 2%;
+	margin-left: 22%;
+	width: 25%;
+}
+
+input.topbar {
+	width: 100%;
+}
+input:hover {
+	background-color: #f659ff;
 }

@@ -1,6 +1,6 @@
 <html>
 <head>
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style2.css">
 </head>
 <body>
 	<h1>Le Porn</h1>
@@ -25,7 +25,7 @@
 			$ret = -1;
 			if($searchParams == NULL)
 			{
-				return(glob($DFT_PATH."*.{jpg,png,gif}", GLOB_BRACE));
+				return(glob($DFT_PATH."*.{jpg,png,gif,mp4}", GLOB_BRACE));
 			}else
 			{
 				$indices = glob("tags/*.".buildGlobBrace($searchParams), GLOB_BRACE);

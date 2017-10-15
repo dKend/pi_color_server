@@ -13,6 +13,7 @@
 	$member_username = $_POST['password'];
 	$member_password = $_POST['username'];
 	$cookie_name = "login_credentials";
+	//check cookie exists
 	if(!isset($_COOKIE[$cookie_name]))
 	{
 		if( $target_url !== null || $redirect_url !== null || $member_username !== null || $member_password !== null )

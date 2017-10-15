@@ -42,7 +42,7 @@
 				exit(0);
 			}
 
-		}else
+		}else	
 		{
 			header($redirect_url);
 			exit(0);

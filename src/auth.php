@@ -6,6 +6,12 @@
 <body>
 <div class="formbox">
 <?php
+	/*
+		how to use auth.php:
+			-	pass url that you are linking to in target_url, the current url in source_url, 
+				password in password, and username in username
+			-	NOTE: dont need to pass user credentials if session is saved in cookie
+	*/
 	include("connect.php");
 	include("Member.class.php");
 	$target_url = $_POST['target_url'];

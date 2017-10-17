@@ -4,9 +4,9 @@
 </head>
 <body>
 	<h1>Le Porn</h1>
-	<table class="layout">
+	
 	<?php
-		
+		include("../connect.php");
 		function buildGlobBrace($searchParams)
 		{
 			$ret = "";
@@ -37,11 +37,14 @@
 				}
 			}
 		}
+		
 		$PAGE_NUM = $_GET["page"];
 		$QUERY = $_GET["search"];
 		$MAX_PER_PAGE = 25;
 		$DFT_PATH = "";
-		echo "<tr><td><form method=\"get\" action=\"\"><input type=\"text\" name=\"search\" placeholder=\"Search...\"><input type=\"submit\"></form></td></tr>";
+		echo "<div class=\"formbox\">";
+		echo "<form method=\"get\" action=\"\"><input type=\"text\" name=\"search\" placeholder=\"Search...\"><input type=\"submit\"></form>";
+		echo "<table class=\"layout\">";
 		if($QUERY !== NULL)
 		{
 			
@@ -50,38 +53,52 @@
 				$PAGE_NUM = 1;
 			}
 			
-			$MAX_INDEX = $PAGE_NUM * $MAX_PER_PAGE;
-			$MIN_INDEX = ( $PAGE_NUM - 1 ) * $MAX_PER_PAGE;
-			$FILES = glob($DFT_PATH."*.{jpg,png,gif,mp4}", GLOB_BRACE);
-			$files_count = count($FILES);
-			$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
+			$MAX_INDEX = ($PAGE_NUM * $MAX_PER_PAGE);
+			$MIN_INDEX = (( $PAGE_NUM - 1 ) * $MAX_PER_PAGE)+1;
+			
+			
+			$conn = NULL;
+			$FILES = NULL;
+			
 
-			if($MAX_INDEX > $files_count){
-				$MAX_INDEX = $files_count;
-			}
 			
-			if($files_count > 0 && $MIN_INDEX < 0)
+			
+			try
 			{
-				$MIN_INDEX = 0;
-			}
-			
-			$index = $MIN_INDEX;
-			//echo "$index <br> $MIN_INDEX <br> $MAX_INDEX";
-			
-			while($index < $MAX_INDEX) {
-				$count1 = 0;
-				$count1Max=5;
-				echo "<tr>";
-				while($count1 < $count1Max && $index < $MAX_INDEX)
-				{
-					$entry = $FILES[$index];
-					$tmp = "http://$_SERVER[HTTP_HOST]/porn/$entry";
-					echo "<td><a href=\"$tmp\">$index<img class=\"preview\" src=\"$entry\" ></a></td>";
-					$count1 = $count1 + 1;
-					$index = $index + 1;
-				}
-				echo "</tr>";
 				
+				$conn = connectToDB();
+				$prep1 = $conn->query("SELECT COUNT(FIL_id) FROM datafiles;");
+				
+				$files_count =  $prep1->fetchColumn();
+				$MAX_PAGES = number_format(($files_count/$MAX_PER_PAGE) + 1, 0);
+				if($MAX_INDEX > $files_count){
+					$MAX_INDEX = $files_count;
+				}
+				
+				if($files_count > 0 && $MIN_INDEX < 0)
+				{
+					$MIN_INDEX = 1;
+				}
+				$query = "SELECT * FROM datafiles WHERE FIL_id BETWEEN ".$MIN_INDEX." AND ".$MAX_INDEX.";";
+				
+				$prep = $conn->prepare($query);
+				$prep->execute();
+				
+				$result = $prep->fetchAll(PDO::FETCH_ASSOC);
+				
+			}catch(PDOException $e)
+			{
+				echo "Error: " . $e->getMessage();
+			}
+			$conn = null;
+			
+			$count = 1;
+			foreach($result as $v)
+			{
+				echo "<td><a href=\"http://$_SERVER[HTTP_HOST]/porn/view.php?FIL_id=$v[FIL_id]\"><img class = \"preview\" src=\"http://$_SERVER[HTTP_HOST]$v[FIL_path]\"></a></td>";
+				if($count%5 === 0)
+					echo "</tr><tr>";
+				$count = $count + 1;
 				
 			}
 			
@@ -137,5 +154,6 @@
 		
 	?>
 	</table>
+	</div>
 </body>
 </html>

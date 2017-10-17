@@ -45,7 +45,7 @@ int client_handle_input(int argc, const char* argv[])
 			}
 			//do things
 		}
-		else if(strcmp(argv[1], "-stclr")==0 || strcmp(argv[1], "-sc")==0)
+		else if(strcmp(argv[1], "-setcolor")==0 || strcmp(argv[1], "-sc")==0)
 		{
 			command = 2;
 			if(argc >= 5)
@@ -67,7 +67,7 @@ int client_handle_input(int argc, const char* argv[])
 				}
 			}
 		}
-		else if(strcmp(argv[1], "-getcolor") == 0)
+		else if(strcmp(argv[1], "-getcolor") == 0 || strcmp(argv[1], "-gc") == 0)
 		{
 			command = 4;
 			int sock = establish_connection();
@@ -90,7 +90,7 @@ int client_handle_input(int argc, const char* argv[])
 				int g = green << 8;
 				
 				ret = r|g|blue;
-				printf("r: %d\ng: %d\nb: %d\nret: %d\n", r, g, blue, ret);
+				printf("red as bits 17-24: %d\ngreen as bits 9-16: %d\nblue as bits 1-8: %d\nentire color as single integer: %d\n", r, g, blue, ret);
 			}
 		}
 		else if(strcmp(argv[1], "-getred") == 0)

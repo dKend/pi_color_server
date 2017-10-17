@@ -99,8 +99,8 @@ int main(int argc, const char* argv[])
 	}
 	else
 	{
-		int pi = pigpio_start(NULL, NULL);
-		listen_loop(pi);
+		printf("Unable to start the server, run with -d command to start the daemon.\n");
+		fflush(stdout);
 	}
 	
 	return 0;

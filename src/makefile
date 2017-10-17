@@ -1,6 +1,9 @@
+test_build: pcs-server pcs-client
+	@echo Build Completed.
 install: pcs-server pcs-client
 	sudo mv pcs-server /bin
 	sudo mv pcs-client /bin
+	
 pcs-server: server.c
 	gcc -pthread -o pcs-server server.c -lpigpiod_if2 -lrt
 	

@@ -16,6 +16,7 @@
 #define RED_PIN 17
 #define GREEN_PIN 22
 #define BLUE_PIN 24
+#define MAX 255
 
 #define LOG_PATH "/var/log/pcs-server"
 #define LOG_NAME "pcs-server.log"
@@ -27,17 +28,23 @@
 void listen_loop(int pi);
 int process_request(int pi, int sock);
 void server_tests();
+void apply_brightness(int* n, int bright);
 int log_output(const char * str, FILE* log);
-/*
-		command state
-		syntax		command#	client_command		description
-					0			n/a					unused
-		-halt		1			halt				client requests that server be stopped.
-		-stclr		2			stclr				set pins to given rgb values (0-255).
-					3			n/a					signal from forked task requesting the current rgb values.
-		-getcolor	4			getcolor			output current color to console.
-					5			n/a					used by color cycle process to communicate with the main server
-					6			
+	/*
+		pcs-client option [args]
+		client_command		command#		description
+								0			unused
+		-halt,					1			client requests that server be stopped.
+		-h
+		-setcolor,				2			set pins to given decimal values (0-255) syntax: <red> <green> <blue>
+		-sc
+								3			signal from forked task requesting the current rgb values.
+		-getcolor,				4			output current color to console.
+		-gc			
+		-getred					5			prints the red value to the console and returns it as the exit code
+		-getgreen				6			prints the green value to the console and returns it as the exit code
+		-getblue				7			prints the blue value to the console and returns it as the exit code
+								
 		
 	*/
 
@@ -164,6 +171,7 @@ void listen_loop(int pi)
 		chmod("colorserver", 511);
 		log_output("Server now listening for connections...\n", log);
 		int var = 0;
+		
 		struct sigaction news, olds;
 		void ctrlc()
 		{
@@ -192,7 +200,7 @@ void listen_loop(int pi)
 		int r = 0;
 		int g = 0;
 		int b = 0;
-		
+		int br = MAX;
 		if(lc_exists == 1)
 		{
 			fread(&r, sizeof(int), 1, lastcolor);
@@ -232,6 +240,11 @@ void listen_loop(int pi)
 						}
 						close(sock2);
 						break;
+					case 3:
+						read(sock2, &br, sizeof(int));
+						close(sock2);
+						colorchanged = 1;
+						break;
 					case 4:
 						write(sock2, &r, sizeof(int));
 						write(sock2, &g, sizeof(int));
@@ -250,6 +263,10 @@ void listen_loop(int pi)
 						write(sock2, &b, sizeof(int));
 						close(sock2);
 						break;
+					case 8:
+						write(sock2, &br, sizeof(int);
+						close(sock2);
+						break;
 					default:
 						close(sock2);
 						break;
@@ -257,9 +274,15 @@ void listen_loop(int pi)
 				//printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
 				if(colorchanged==1)
 				{
-					set_PWM_dutycycle(pi, RED_PIN, r);
-					set_PWM_dutycycle(pi, GREEN_PIN, g);
-					set_PWM_dutycycle(pi, BLUE_PIN, b);
+					int tmp_r = r;
+					int tmp_g = g;
+					int tmp_b = b;
+					apply_bright(&tmp_r, br);
+					apply_bright(&tmp_g, br);
+					apply_bright(&tmp_b, br);
+					set_PWM_dutycycle(pi, RED_PIN, tmp_r);
+					set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
+					set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
 					colorchanged = 0;
 				}
 			}
@@ -289,10 +312,17 @@ void listen_loop(int pi)
 int log_output(const char * str, FILE* log)
 {
 	int ret = 0;
-	if (log != NULL)
+	if (log != NULL
 	{
 		ret = strlen(str);
 		fwrite(str, sizeof(char), ret, log);
 	}
 	return ret;
+}
+
+void apply_brightness(int* n, int bright)
+{
+	if ( n != NULL  ){
+		*n = ((*n) * bright)/MAX;
+	}
 }

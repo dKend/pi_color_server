@@ -110,7 +110,7 @@ int client_handle_input(int argc, const char* argv[])
 				printf("{red: %d}\n", red);
 				
 				ret = red;
-				printf("r: %d\n", red);
+				//printf("r: %d\n", red);
 			}
 		}
 		else if(strcmp(argv[1], "-getgreen") == 0)
@@ -129,7 +129,7 @@ int client_handle_input(int argc, const char* argv[])
 				printf("{green: %d}\n", green);
 				
 				ret = green;
-				printf("g: %d\n", green);
+				//printf("g: %d\n", green);
 			}
 		}
 		else if(strcmp(argv[1], "-getblue") == 0)
@@ -148,8 +148,43 @@ int client_handle_input(int argc, const char* argv[])
 				printf("{blue: %d}\n", blue);
 				
 				ret = blue;
-				printf("r: %d\n", blue);
+				//printf("r: %d\n", blue);
 			}
+		}
+		else if(strcmp(argv[1], "-setbright") == 0){
+			if( argc >= 3 ){
+				command = 3;
+				int br = atoi(argv[2]);
+				if(br > MAX)
+					br=MAX;
+				else if(br < 0)
+					br=0;
+				
+				int sock = establish_connection();
+				if(sock != -1){
+					write(sock, &command, sizeof(int));
+					write(sock, &br, sizeof(int));
+					close(sock);
+				}
+			}
+			
+		}
+		else if(strcmp(argv[1], "-getbright") == 0){
+			command = 8;
+			int sock = establish_connection();
+			if(sock != -1 ){
+				int br;
+				
+				write(sock, &command, sizeof(int));
+				read(sock, &br, sizeof(int));
+				
+				close(sock);
+				
+				printf("{brightness: %d}\n", br);
+				
+				ret = br;
+			}
+			
 		}
 		else
 		{

@@ -19,6 +19,7 @@
 
 #define LOG_PATH "/var/log/pcs-server"
 #define LOG_NAME "pcs-server.log"
+#define DIR_PATH "/tmp/pcs"
 #define BUFF_LEN 1024
 #define SAV_NAME "pcs-server.color"
 
@@ -68,17 +69,25 @@ int main(int argc, const char* argv[])
 					fflush(stdout);
 					exit(1);
 				}
-				chdir("/");
+				
+				//check if pcs directory exists and create it if it doesnt
+				DIR* dir = opendir(DIR_PATH);
+				if(dir)
+					closedir(dir);
+				else if(errno == ENOENT)
+				{
+					mkdir(DIR_PATH, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH|S_IWOTH);
+				}else
+					perror("unable to determine file existence.");
+				
+				chdir(DIR_PATH);
+				
 				if(access("colorserver", F_OK)!=-1)
 				{
 					printf("error: server already running or socket file already exists.\n");
 					fflush(stdout);
 					exit(1);
 				}
-				
-				
-				
-				
 				close(STDIN_FILENO);
 				close(STDOUT_FILENO);
 				close(STDERR_FILENO);

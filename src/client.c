@@ -7,7 +7,7 @@
 #include <errno.h>
 
 #include "client.h"
-
+#define DIR_PATH "/tmp/pcs"
 /*
 	COMMANDS:
 	0	none (unused)
@@ -21,6 +21,7 @@
 */
 int main(int argc, const char* argv[])
 {
+	chdir(DIR_PATH); 
 	int ret = client_handle_input(argc, argv);
 	printf("ret: %d\n", ret);
 	return ret;

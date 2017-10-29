@@ -201,6 +201,8 @@ void listen_loop(int pi)
 		int g = 0;
 		int b = 0;
 		int br = MAX;
+		int colorchanged = 0;
+		
 		if(lc_exists == 1)
 		{
 			fread(&r, sizeof(int), 1, lastcolor);
@@ -208,9 +210,10 @@ void listen_loop(int pi)
 			fread(&b, sizeof(int), 1, lastcolor);
 			fclose(lastcolor);
 			lastcolor = NULL;
+			colorchanged = 1;
 		}
 		
-		int colorchanged = 0;
+		
 		
 		while(var == 0)
 		{
@@ -272,19 +275,21 @@ void listen_loop(int pi)
 						break;
 				}
 				//printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
-				if(colorchanged==1)
-				{
-					int tmp_r = r;
-					int tmp_g = g;
-					int tmp_b = b;
-					apply_bright(&tmp_r, br);
-					apply_bright(&tmp_g, br);
-					apply_bright(&tmp_b, br);
-					set_PWM_dutycycle(pi, RED_PIN, tmp_r);
-					set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
-					set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
-					colorchanged = 0;
-				}
+				
+			}
+			
+			if(colorchanged==1)
+			{
+				int tmp_r = r;
+				int tmp_g = g;
+				int tmp_b = b;
+				apply_bright(&tmp_r, br);
+				apply_bright(&tmp_g, br);
+				apply_bright(&tmp_b, br);
+				set_PWM_dutycycle(pi, RED_PIN, tmp_r);
+				set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
+				set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
+				colorchanged = 0;
 			}
 		}
 		lastcolor = fopen(SAV_NAME, "w+");

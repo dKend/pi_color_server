@@ -267,7 +267,7 @@ void listen_loop(int pi)
 						close(sock2);
 						break;
 					case 8:
-						write(sock2, &br, sizeof(int);
+						write(sock2, &br, sizeof(int));
 						close(sock2);
 						break;
 					default:
@@ -283,9 +283,9 @@ void listen_loop(int pi)
 				int tmp_r = r;
 				int tmp_g = g;
 				int tmp_b = b;
-				apply_bright(&tmp_r, br);
-				apply_bright(&tmp_g, br);
-				apply_bright(&tmp_b, br);
+				apply_brightness(&tmp_r, br);
+				apply_brightness(&tmp_g, br);
+				apply_brightness(&tmp_b, br);
 				set_PWM_dutycycle(pi, RED_PIN, tmp_r);
 				set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
 				set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
@@ -317,7 +317,7 @@ void listen_loop(int pi)
 int log_output(const char * str, FILE* log)
 {
 	int ret = 0;
-	if (log != NULL
+	if (log != NULL)
 	{
 		ret = strlen(str);
 		fwrite(str, sizeof(char), ret, log);

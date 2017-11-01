@@ -8,6 +8,7 @@
 
 #include "client.h"
 #define DIR_PATH "/tmp/pcs"
+#define MAX 255
 /*
 	COMMANDS:
 	0	none (unused)

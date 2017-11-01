@@ -1,5 +1,5 @@
 <?php
-	include("index.php");
+	include("PCSHandler.class.php");
 	use PHPUnit\Framework\TestCase;
 	
 	class PCSHandlerTest extends TestCase{
@@ -30,7 +30,7 @@
 			$this->goodArgs = null;
 			$this->badArgs = null;
 			
-			//exec("pcs-client -halt");
+			exec("pcs-client -halt");
 		}
 		
 		public function test_HandleRequest_OnValidMethod(){
@@ -125,7 +125,8 @@
 			$this->assertTrue($tmp[1] === "R: <input type='range' min='0' max='255' value='0' name='r'><br>");
 			$this->assertTrue($tmp[2] === "G: <input type='range' min='0' max='255' value='0' name='g'><br>");
 			$this->assertTrue($tmp[3] === "B: <input type='range' min='0' max='255' value='0' name='b'><br>");
-			$this->assertTrue($tmp[4] === "</form>");
+			$this->assertTrue($tmp[4] === "<input type='submit' value='Set Color'><br>");
+			$this->assertTrue($tmp[5] === "</form>");
 		}
 		
 		public function test_HandlePOST_WithGoodArguments(){
@@ -145,7 +146,8 @@
 		}
 		
 		public function test_GetColor_ServerOnline(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->getColor()!==false);
 		}
 		
@@ -156,12 +158,14 @@
 		}
 		
 		public function test_SetColor_ServerOnlineWithGoodArgs(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->setColor($this->goodArgs));
 		}
 		
 		public function test_SetColor_ServerOnlineWithBadArgs(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertFalse($this->socketInterface->setColor($this->badArgs));
 		}
 		
@@ -170,7 +174,8 @@
 		}
 		
 		public function test_GetServerStatus_ServerOnline(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->getServerStatus());
 		}
 		
@@ -179,7 +184,8 @@
 		}
 		
 		public function test_GetBrightness_ServerOnline(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->getBrightness()!==false);
 		}
 		
@@ -191,13 +197,15 @@
 		}
 		
 		public function test_SetBrightness_ServerOnlineWithGoodArgs(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->setBrightness(255));
 			$this->assertTrue($this->socketInterface->setBrightness(0));
 		}
 		
 		public function test_SetBrightness_ServerOnlineWithBadArgs(){
-			$this->assertEquals(0, exec("pcs-server -d"));
+			exec("pcs-server -d", $dummy, $tmp);
+			$this->assertEquals(0, $tmp);
 			$this->assertFalse($this->socketInterface->setBrightness(-1));
 			$this->assertFalse($this->socketInterface->setBrightness(-256));
 			$this->assertFalse($this->socketInterface->setBrightness(256));

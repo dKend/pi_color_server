@@ -6,7 +6,7 @@
 <body>
 	<?php
 		include("PCSHandler.class.php");
-		pageHandler();
+		pageHandler(filter_input(INPUT_SERVER, "REQUEST_METHOD"));
 		
 		
 		

@@ -1,7 +1,6 @@
 <?php
 	//call this func on the pcs-control page to do everything
-	function pageHandler(){
-		$method = filter_input(INPUT_SERVER, "REQUEST_METHOD");
+	function pageHandler($method){
 		if($method === "POST")
 			$args = $_POST;
 		else if($method === "GET")
@@ -211,7 +210,7 @@
 		public function handleRequestWrapper($method){
 			$ret = $this->handleRequest($method);
 			if($ret === 0){
-				header("Location: http://$_SERVER[HTTP_HOST]");
+				header("Location: http://$_SERVER[HTTP_HOST]/test_env");
 				die();
 			}
 			return($ret);

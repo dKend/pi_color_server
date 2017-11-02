@@ -29,7 +29,7 @@
 			$this->handler = null;
 			$this->goodArgs = null;
 			$this->badArgs = null;
-			
+			exec("pcs-client -setcolor 0 0 0");
 			exec("pcs-client -halt");
 		}
 		
@@ -149,6 +149,12 @@
 			exec("pcs-server -d", $dummy, $tmp);
 			$this->assertEquals(0, $tmp);
 			$this->assertTrue($this->socketInterface->getColor()!==false);
+			
+			exec("pcs-client -setcolor 255 255 255", $dummy, $tmp);
+			$color = $this->socketInterface->getColor()
+			$this->assertEquals(255, $color["r"]);
+			$this->assertEquals(255, $color["g"]);
+			$this->assertEquals(255, $color["b"]);
 		}
 		
 		public function test_SetColor_ServerOffline(){

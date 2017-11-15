@@ -1,9 +1,11 @@
-main: color.o client.o
-	gcc -Wall -pthread color.o -lm client.o -o pcs server.c -lpigpiod_if2 -lrt
-color.o: color.c
-	gcc -Wall -c color.c
-client.o: client.c
-	gcc -Wall -c client.c
-cln:
-	rm pcs
-	rm *.o
+test_build: pcs-server pcs-client
+	@echo Build Completed.
+install: pcs-server pcs-client
+	sudo mv pcs-server /bin
+	sudo mv pcs-client /bin
+	
+pcs-server: server.c
+	gcc -pthread -o pcs-server server.c -lpigpiod_if2 -lrt
+	
+pcs-client: client.c
+	gcc -o pcs-client client.c

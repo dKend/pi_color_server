@@ -114,10 +114,11 @@ int test_(){
 		struct node* tail;
 		colorlist_init(&head, &tail);
 		float wavelength = 10.0;
-		int start = 0;
-		int end = 255;
+		color start = {0,0,0,255};
+		color end = {0,255,0,255};
+		colorPair p = {start, end};
 		int delay_ns = 50000000;
-		generate_sin_cycle_list(&head, &tail, wavelength, start, end, delay_ns);
+		generate_sin_cycle_list(&head, &tail, wavelength, p, delay_ns);
 		
 		assert_(head!=NULL, "head is still NULL.");
 		assert_(tail!=NULL, "tail is still NULL.");
@@ -127,56 +128,6 @@ int test_(){
 		
 		if(head!=NULL && tail!=NULL)
 			colorlist_free(&tail);
-		
-	}
-	void test_create_trans()
-	{
-		
-		struct trans* t = NULL;
-		create_trans(&t);
-		
-		assert_(t!=NULL, "transition not created.");
-		assert_(t->next==NULL, "transition not standalone.");
-		assert_(t->head==NULL, "transitions head is not NULL.");
-		
-		free(t);
-	}
-	
-	void test_generate_list_trans()
-	{
-		struct trans* t = NULL;
-		color c = {0, 255, 0, 255, 5000000};
-		
-		
-	}
-	
-	void test_free_trans()
-	{
-		
-	}
-	
-	void test_add_trans()
-	{
-		
-	}
-	
-	void test_remove_trans()
-	{
-		
-	}
-	
-	void test_get_trans()
-	{
-		
-	}
-	
-	void test_save_cycle()
-	{
-		
-	}
-	
-	void test_load_cycle()
-	{
 		
 	}
 	
@@ -189,13 +140,7 @@ int test_(){
 	test_colorlist_init();
 	test_colorlist_add();
 	test_generate_sin_cycle_list();
-	test_create_trans();
-	test_free_trans();
-	test_add_trans();
-	test_remove_trans();
-	test_get_trans();
-	test_save_cycle();
-	test_load_cycle();
+	
 	return 0;
 	
 }
@@ -321,7 +266,7 @@ int sin_color_cycle(float time, float wavelength, int start, int end)
 	return (int)amplitude*((offset)+sin(rad));
 }
 
-void generate_sin_cycle_list(struct node** head, struct node** tail, float wavelength, int start, int end, int delay_ns)
+void generate_sin_cycle_list(struct node** head, struct node** tail, float wavelength, colorPair pair, int delay_ns)
 {
 	
 	//TODO
@@ -339,7 +284,11 @@ void generate_sin_cycle_list(struct node** head, struct node** tail, float wavel
 				n->next = NULL;
 				
 				color_init(n->data);
-				color_set_green(n->data, sin_color_cycle(time, wavelength, start, end));
+				
+				color_set_red(n->data, sin_color_cycle(time, wavelength, pair.start.red, pair.end.red));
+				color_set_green(n->data, sin_color_cycle(time, wavelength, pair.start.green, pair.end.green));
+				color_set_blue(n->data, sin_color_cycle(time, wavelength, pair.start.blue, pair.end.blue));
+				color_set_brightness(n->data, sin_color_cycle(time, wavelength, pair.start.brightness, pair.end.brightness));
 				
 				colorlist_add(head, tail, n);
 				
@@ -366,23 +315,4 @@ void colorlist_print(struct node* head, struct node* tail)
 		}
 	}	
 	tail->next = head;
-}
-
-void color2_init(color2* c)
-{
-	color2_set(c, 0);
-	color2_set_delay(c, 1000);
-}
-void color2_set(color2* c, unsigned int v)
-{
-	if(v <= MAX_COLOR)
-		c->value = v;
-}
-void color2_set_delay(color2* c, unsigned int v)
-{
-	c->delay_ns = v;
-}
-void color2_set_pin(color2* c, unsigned int v)
-{
-	c->pin = v;
 }

@@ -9,9 +9,12 @@
 #include <time.h>
 #include <pigpiod_if2.h>
 #include <sys/stat.h>
-
+#include <pthread.h>
 #include <dirent.h>
 #include <errno.h>
+#include <semaphore.h>
+#include "color.h"
+#include "threadArgs.h"
 
 #define RED_PIN 17
 #define GREEN_PIN 22
@@ -24,12 +27,49 @@
 #define BUFF_LEN 1024
 #define SAV_NAME "pcs-server.color"
 
+static unsigned int red = 0;
+static unsigned int green = 0;
+static unsigned int blue = 0;
+static unsigned int brightness = MAX;
+static int colorchanged = 0;
+static int threadRunning = 0;
+static int suspendThreadForNotif = 0;
+static sem_t redlock;
+static sem_t greenlock;
+static sem_t bluelock;
+static sem_t brightlock;
+static sem_t colorchangedlock;
+static sem_t threadrunninglock;
+static sem_t colorlock;
+static sem_t suspendthreadfornotiflock;
+static FILE* log = NULL;
 
+
+void* cycle(void* args);
+unsigned int getRed();
+void setRed(unsigned int value);
+unsigned int getGreen();
+void setGreen(unsigned int value);
+unsigned int getBlue();
+void setBlue(unsigned int value);
+unsigned int getBrightness();
+void setBrightness(unsigned int value);
+int getColorChanged();
+void setColorChanged();
+void unsetColorChanged();
+int getThreadRunning();
+void setThreadRunning();
+void unsetThreadRunning();
+void setColor(unsigned int r, unsigned int g, unsigned int b, unsigned int br);
+void colorChangedActions(int pi);
 void listen_loop(int pi);
 int process_request(int pi, int sock);
 void server_tests();
 void apply_brightness(int* n, int bright);
-int log_output(const char * str, FILE* log);
+int getSuspendThreadForNotif();	//returns state of suspend flag
+int setSuspendThreadForNotif();	//set state of suspend to 1
+int unsetSuspendThreadForNotif();	//set state of suspend to 0 (default value)
+int log_output(const char * str, FILE* f);
 	/*
 		pcs-client option [args]
 		client_command		command#		description
@@ -132,7 +172,6 @@ int process_request(int pi, int sock)
 
 void listen_loop(int pi)
 {
-	
 	DIR* dir = opendir(LOG_PATH);
 	if(dir)
 		closedir(dir);
@@ -142,18 +181,55 @@ void listen_loop(int pi)
 	}else
 		perror("unable to determine file existence.");
 	
-	
+	//create path for log file and place it in a 1024 byte buffer
 	char buffer[BUFF_LEN];
 	sprintf(buffer, "%s/%s", LOG_PATH, LOG_NAME);
-	
-	FILE* log = NULL;
+	//init log file
 	log = fopen(buffer, "w+");
-	//int status;
+	int lockInitFailed = 0;
+	
+	//initialise locks
+	if(sem_init(&redlock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"redlock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&greenlock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"greenlock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&bluelock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"bluelock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&brightlock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"brightlock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&colorchangedlock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"colorchangedlock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&threadrunninglock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"threadrunninglock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&colorlock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"colorlock\"", log);
+		lockInitFailed = 1;
+	}
+	if(sem_init(&suspendthreadfornotiflock, 0, 1) == -1){
+		log_output("ERROR: Failed to initialise semaphore \"suspendthreadfornotiflock\"", log);
+		lockInitFailed = 1;
+	}
+	
+	if(lockInitFailed == 1){
+		pigpio_stop(pi);
+		fclose(log);
+		exit(1);
+	}
 	
 	struct sockaddr servaddr = {AF_UNIX, "colorserver"};
-	
 	socklen_t servaddrlen = sizeof(struct sockaddr)+12;
-	
 	int sock1 = socket(AF_UNIX, SOCK_STREAM, 0);
 	
 	if(sock1 == -1)
@@ -173,8 +249,7 @@ void listen_loop(int pi)
 		int var = 0;
 		
 		struct sigaction news, olds;
-		void ctrlc()
-		{
+		void ctrlc(){
 			log_output("\nHalting Color Server...\n", log);
 			sigaction(SIGINT, &olds, NULL);
 			close(sock1);
@@ -197,102 +272,104 @@ void listen_loop(int pi)
 			lastcolor = fopen(SAV_NAME, "r");
 			lc_exists = 1;
 		}
-		int r = 0;
-		int g = 0;
-		int b = 0;
-		int br = MAX;
-		int colorchanged = 0;
-		
 		if(lc_exists == 1)
 		{
+			int r, g, b;
 			fread(&r, sizeof(int), 1, lastcolor);
 			fread(&g, sizeof(int), 1, lastcolor);
 			fread(&b, sizeof(int), 1, lastcolor);
+			setColor(r, g, b, MAX);
+			colorChangedActions(pi);
 			fclose(lastcolor);
 			lastcolor = NULL;
-			colorchanged = 1;
 		}
-		
-		
-		
 		while(var == 0)
 		{
 			int sock2 = accept(sock1, NULL, NULL);
+			threadArgs* sockptr;
+			*sockptr = NULL;
+			initThreadArgs(&sockptr, pi, sock2);
+			
 			if(sock2!=-1)
 			{
 				log_output("Socket Connection Accepted!\n", log);
 				int resp_code = process_request(pi, sock2);
 				char tmp[BUFF_LEN];
 				sprintf(tmp,"%d response code.\n",resp_code);
-				log_output(tmp , log);
-				
+				log_output(tmp, log);
+				unsigned int r, g, b, br;
+				r = getRed();
+				g = getGreen();
+				b = getBlue();
+				br = getBrightness();
 				switch(resp_code)
 				{
 					case 1:
+						//halt
 						close(sock2);
 						ctrlc();
 						break;
 					
 					case 2:
-						if(colorchanged == 0)
-						{
-							read(sock2, &r, sizeof(int));
-							read(sock2, &g, sizeof(int));
-							read(sock2, &b, sizeof(int));
-							colorchanged = 1;
-						}
+						//setcolor
+						read(sock2, &r, sizeof(int));
+						read(sock2, &g, sizeof(int));
+						read(sock2, &b, sizeof(int));
 						close(sock2);
+						setColor(r, g, b, br);
+						setColorChanged();
 						break;
 					case 3:
+						//setbrightness
 						read(sock2, &br, sizeof(int));
 						close(sock2);
-						colorchanged = 1;
+						setBrightness(br);
+						setColorChanged();
 						break;
 					case 4:
+						//getcolor
 						write(sock2, &r, sizeof(int));
 						write(sock2, &g, sizeof(int));
 						write(sock2, &b, sizeof(int));
 						close(sock2);
 						break;
 					case 5:
+						//getred
 						write(sock2, &r, sizeof(int));
 						close(sock2);
 						break;
 					case 6:
+						//getgreen
 						write(sock2, &g, sizeof(int));
 						close(sock2);
 						break;
 					case 7:
+						//getblue
 						write(sock2, &b, sizeof(int));
 						close(sock2);
 						break;
 					case 8:
+						//getbrightness
 						write(sock2, &br, sizeof(int));
 						close(sock2);
 						break;
 					default:
+						//error
 						close(sock2);
 						break;
 				}
-				//printf("red = %d\tgreen = %d\tblue = %d\n", r, g, b);
-				
 			}
 			
-			if(colorchanged==1)
+			if(getColorChanged()==1)
 			{
-				int tmp_r = r;
-				int tmp_g = g;
-				int tmp_b = b;
-				apply_brightness(&tmp_r, br);
-				apply_brightness(&tmp_g, br);
-				apply_brightness(&tmp_b, br);
-				set_PWM_dutycycle(pi, RED_PIN, tmp_r);
-				set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
-				set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
-				colorchanged = 0;
+				colorChangedActions(pi);
 			}
 		}
 		lastcolor = fopen(SAV_NAME, "w+");
+		unsigned int r, g, b;
+		r = getRed();
+		g = getGreen();
+		b = getBlue();
 		fwrite(&r, sizeof(int), 1, lastcolor);
 		fwrite(&g, sizeof(int), 1, lastcolor);
 		fwrite(&b, sizeof(int), 1, lastcolor);
@@ -314,13 +391,13 @@ void listen_loop(int pi)
 	
 }
 
-int log_output(const char * str, FILE* log)
+int log_output(const char * str, FILE* f)
 {
 	int ret = 0;
-	if (log != NULL)
+	if (f != NULL)
 	{
 		ret = strlen(str);
-		fwrite(str, sizeof(char), ret, log);
+		fwrite(str, sizeof(char), ret, f);
 	}
 	return ret;
 }
@@ -330,4 +407,154 @@ void apply_brightness(int* n, int bright)
 	if ( n != NULL  ){
 		*n = ((*n) * bright)/MAX;
 	}
+}
+int getRed(){
+	int ret = -1;
+	sem_wait(&redlock);
+		ret = red;
+	sem_post(&redlock);
+	return ret;
+}
+void setRed(unsigned int value){
+	sem_wait(&redlock);
+		if(value >= 0 && value <= 255 ){
+			red = value;
+		}
+	sem_post(&redlock);
+}
+int getGreen(){
+	int ret = -1;
+	sem_wait(&greenlock);
+		ret = green;
+	sem_post(&greenlock);
+	return ret;
+}
+void setGreen(unsigned int value){
+	sem_wait(&greenlock);
+		if(value >= 0 && value <= 255 ){
+			green = value;
+		}
+	sem_post(&greenlock);
+}
+int getBlue(){
+	int ret = -1;
+	sem_wait(&bluelock);
+		ret = blue;
+	sem_post(&bluelock);
+	return ret;
+}
+void setBlue(unsigned int value){
+	sem_wait(&bluelock);
+		if(value >= 0 && value <= 255 ){
+			blue = value;
+		}
+	sem_post(&bluelock);
+}
+int getBrightness(){
+	int ret = -1;
+	sem_wait(&brightlock);
+		ret = brightness;
+	sem_post(&brightlock);
+	return ret;
+}
+void setBrightness(unsigned int value){
+	sem_wait(&brightlock);
+		if(value >= 0 && value <= 255 ){
+			brightness = value;
+		}
+	sem_post(&brightlock);
+}
+int getColorChanged(){
+	int ret = -1;
+	sem_wait(&colorchangedlock);
+		ret = colorchanged;
+	sem_post(&colorchangedlock);
+	return ret;
+}
+void setColorChanged(){
+	sem_wait(&colorchangedlock);
+		colorchanged = 1;
+	sem_post(&colorchangedlock);
+}
+void unsetColorChanged(){
+	sem_wait(&colorchangedlock);
+		colorchanged = 0;
+	sem_post(&colorchangedlock);
+}
+int getThreadRunning(){
+	int ret = -1;
+	sem_wait(&threadrunninglock);
+		ret = threadRunning;
+	sem_post(&threadrunninglock);
+	return ret;
+}
+void setThreadRunning(){
+	sem_wait(&threadrunninglock);
+		threadRunning = 1;
+	sem_post(&threadrunninglock);
+}
+void unsetThreadRunning(){
+	sem_wait(&threadrunninglock);
+		threadRunning = 0;
+	sem_post(&threadrunninglock);
+}
+void setColor(unsigned int r, unsigned int g, unsigned int b, unsigned int br){
+	sem_wait(&colorlock);
+	sem_wait(&redlock);
+	sem_wait(&greenlock);
+	sem_wait(&bluelock);
+	sem_wait(&brightlock);
+		if(r >= 0 && r <= 255)
+			red = r;
+		if(g >= 0 && g <= 255)
+			green = g;
+		if(b >= 0 && b <= 255)
+			blue = b;
+		if(br >= 0 && br <= 255)
+			brightness = br;
+	sem_post(&brightlock);
+	sem_post(&bluelock);
+	sem_post(&greenlock);
+	sem_post(&redlock);
+	sem_post(&colorlock);
+}
+void colorChangedActions(int pi){
+	int br = getBrightness();
+	int tmp_r = getRed();
+	int tmp_g = getGreen();
+	int tmp_b = getBlue();
+	apply_brightness(&tmp_r, br);
+	apply_brightness(&tmp_g, br);
+	apply_brightness(&tmp_b, br);
+	set_PWM_dutycycle(pi, RED_PIN, tmp_r);
+	set_PWM_dutycycle(pi, GREEN_PIN, tmp_g);
+	set_PWM_dutycycle(pi, BLUE_PIN, tmp_b);
+	unsetColorChanged();
+}
+void* cycle(void* args){
+	//thread color cycle function
+	colorPair* tmp = (colorPair*)args;
+	setThreadRunning();
+	struct node* head;
+	struct node* tail;
+	colorlist_init(&head, &tail);
+	generate_sin_cycle_list(&head, &tail, (float)10.0, &tmp, 50000000);
+	return NULL;
+}
+int getSuspendThreadForNotif(){
+	int ret = -1;
+	sem_wait(&suspendthreadfornotiflock);
+		ret = suspendThreadForNotif;
+	sem_post(&suspendthreadfornotiflock);
+	return ret;
+}
+int setSuspendThreadForNotif(){
+	sem_wait(&suspendthreadfornotiflock);
+		suspendThreadForNotif = 1;
+	sem_post(&suspendthreadfornotiflock);
+}
+int unsetSuspendThreadForNotif(){
+	sem_wait(&suspendthreadfornotiflock);
+		suspendThreadForNotif = 0;
+	sem_post(&suspendthreadfornotiflock);
 }

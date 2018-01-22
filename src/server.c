@@ -70,6 +70,10 @@ int getSuspendThreadForNotif();	//returns state of suspend flag
 int setSuspendThreadForNotif();	//set state of suspend to 1
 int unsetSuspendThreadForNotif();	//set state of suspend to 0 (default value)
 int log_output(const char * str, FILE* f);
+void* threadHandleConnection(void* args);
+void initLog();
+int initMutex();
+int initAll();
 	/*
 		pcs-client option [args]
 		client_command		command#		description
@@ -162,78 +166,83 @@ int main(int argc, const char* argv[])
 	return 0;
 }
 
-int process_request(int pi, int sock)
-{
-	
+int process_request(int pi, int sock){
 	int command = 0;
 	read(sock, &command, sizeof(int));
+	char tmp[BUFF_LEN];
+	sprintf(tmp,"%d response code.\n",command);
+	log_output(tmp, log);
+	unsigned int r, g, b, br;
+	r = getRed();
+	g = getGreen();
+	b = getBlue();
+	br = getBrightness();
+	switch(command){
+		case 1:
+			//halt
+			close(sock);
+			ctrlc();
+			break;
+		
+		case 2:
+			//setcolor
+			read(sock, &r, sizeof(int));
+			read(sock, &g, sizeof(int));
+			read(sock, &b, sizeof(int));
+			close(sock);
+			setColor(r, g, b, br);
+			setColorChanged();
+			break;
+		case 3:
+			//setbrightness
+			read(sock, &br, sizeof(int));
+			close(sock);
+			setBrightness(br);
+			setColorChanged();
+			break;
+		case 4:
+			//getcolor
+			write(sock, &r, sizeof(int));
+			write(sock, &g, sizeof(int));
+			write(sock, &b, sizeof(int));
+			close(sock);
+			break;
+		case 5:
+			//getred
+			write(sock, &r, sizeof(int));
+			close(sock);
+			break;
+		case 6:
+			//getgreen
+			write(sock, &g, sizeof(int));
+			close(sock);
+			break;
+		case 7:
+			//getblue
+			write(sock, &b, sizeof(int));
+			close(sock);
+			break;
+		case 8:
+			//getbrightness
+			write(sock, &br, sizeof(int));
+			close(sock);
+			break;
+		default:
+			//error
+			close(sock);
+			break;
+	}
+	
 	return command;
 }
 
-void listen_loop(int pi)
-{
-	DIR* dir = opendir(LOG_PATH);
-	if(dir)
-		closedir(dir);
-	else if(errno == ENOENT)
-	{
-		mkdir(LOG_PATH, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-	}else
-		perror("unable to determine file existence.");
-	
-	//create path for log file and place it in a 1024 byte buffer
-	char buffer[BUFF_LEN];
-	sprintf(buffer, "%s/%s", LOG_PATH, LOG_NAME);
-	//init log file
-	log = fopen(buffer, "w+");
-	int lockInitFailed = 0;
-	
-	//initialise locks
-	if(sem_init(&redlock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"redlock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&greenlock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"greenlock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&bluelock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"bluelock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&brightlock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"brightlock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&colorchangedlock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"colorchangedlock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&threadrunninglock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"threadrunninglock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&colorlock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"colorlock\"", log);
-		lockInitFailed = 1;
-	}
-	if(sem_init(&suspendthreadfornotiflock, 0, 1) == -1){
-		log_output("ERROR: Failed to initialise semaphore \"suspendthreadfornotiflock\"", log);
-		lockInitFailed = 1;
-	}
-	
-	if(lockInitFailed == 1){
-		pigpio_stop(pi);
-		fclose(log);
-		exit(1);
-	}
-	
+void listen_loop(int pi){
+	initAll();
 	struct sockaddr servaddr = {AF_UNIX, "colorserver"};
 	socklen_t servaddrlen = sizeof(struct sockaddr)+12;
 	int sock1 = socket(AF_UNIX, SOCK_STREAM, 0);
 	
-	if(sock1 == -1)
-	{
+	if(sock1 == -1){
 		log_output("\nFailed to create socket, aborting...\n", log);
 		pigpio_stop(pi);
 		fclose(log);
@@ -286,78 +295,15 @@ void listen_loop(int pi)
 		while(var == 0)
 		{
 			int sock2 = accept(sock1, NULL, NULL);
+			/*
 			threadArgs* sockptr;
 			*sockptr = NULL;
 			initThreadArgs(&sockptr, pi, sock2);
-			
+			*/
 			if(sock2!=-1)
 			{
 				log_output("Socket Connection Accepted!\n", log);
-				int resp_code = process_request(pi, sock2);
-				char tmp[BUFF_LEN];
-				sprintf(tmp,"%d response code.\n",resp_code);
-				log_output(tmp, log);
-				unsigned int r, g, b, br;
-				r = getRed();
-				g = getGreen();
-				b = getBlue();
-				br = getBrightness();
-				switch(resp_code)
-				{
-					case 1:
-						//halt
-						close(sock2);
-						ctrlc();
-						break;
-					
-					case 2:
-						//setcolor
-						read(sock2, &r, sizeof(int));
-						read(sock2, &g, sizeof(int));
-						read(sock2, &b, sizeof(int));
-						close(sock2);
-						setColor(r, g, b, br);
-						setColorChanged();
-						break;
-					case 3:
-						//setbrightness
-						read(sock2, &br, sizeof(int));
-						close(sock2);
-						setBrightness(br);
-						setColorChanged();
-						break;
-					case 4:
-						//getcolor
-						write(sock2, &r, sizeof(int));
-						write(sock2, &g, sizeof(int));
-						write(sock2, &b, sizeof(int));
-						close(sock2);
-						break;
-					case 5:
-						//getred
-						write(sock2, &r, sizeof(int));
-						close(sock2);
-						break;
-					case 6:
-						//getgreen
-						write(sock2, &g, sizeof(int));
-						close(sock2);
-						break;
-					case 7:
-						//getblue
-						write(sock2, &b, sizeof(int));
-						close(sock2);
-						break;
-					case 8:
-						//getbrightness
-						write(sock2, &br, sizeof(int));
-						close(sock2);
-						break;
-					default:
-						//error
-						close(sock2);
-						break;
-				}
+				process_request(pi, sock2);
 			}
 			
 			if(getColorChanged()==1)
@@ -365,6 +311,7 @@ void listen_loop(int pi)
 				colorChangedActions(pi);
 			}
 		}
+		
 		lastcolor = fopen(SAV_NAME, "w+");
 		unsigned int r, g, b;
 		r = getRed();
@@ -557,4 +504,109 @@ int unsetSuspendThreadForNotif(){
 	sem_wait(&suspendthreadfornotiflock);
 		suspendThreadForNotif = 0;
 	sem_post(&suspendthreadfornotiflock);
+}
+void* threadHandleConnection(void* args){
+	threadArgs* targs = (threadArgs*) args;
+	int sock = targs->sock;
+	int pi = targs->pi;
+	process_request(pi, sock);
+	return NULL;
+}
+int initLog(){
+	int ret = -1;
+	int canCreateFile = 0;
+	DIR* dir = opendir(LOG_PATH);
+	if(dir){
+		closedir(dir);
+		canCreateFile = 1;
+	}else if(errno == ENOENT){
+		mkdir(LOG_PATH, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+		canCreateFile = 1;
+	}else{
+		perror("unable to determine file existence.");
+	}
+	if(canCreateFile == 1){
+		//create path for log file and place it in a 1024 byte buffer
+		char buffer[BUFF_LEN];
+		sprintf(buffer, "%s/%s", LOG_PATH, LOG_NAME);
+		//init log file
+		log = fopen(buffer, "w+");
+		if(log != NULL){
+			ret = 0;
+		}
+	}
+	
+	return ret;
+}
+int initMutex(){
+	int lockInitFailed = 0;
+	if(log != NULL){
+		//initialise locks
+		if(sem_init(&redlock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"redlock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&greenlock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"greenlock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&bluelock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"bluelock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&brightlock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"brightlock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&colorchangedlock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"colorchangedlock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&threadrunninglock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"threadrunninglock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&colorlock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"colorlock\"", log);
+			lockInitFailed = 1;
+		}
+		if(sem_init(&suspendthreadfornotiflock, 0, 1) == -1){
+			log_output("ERROR: Failed to initialise semaphore \"suspendthreadfornotiflock\"", log);
+			lockInitFailed = 1;
+		}
+	}else{
+		printf("CRITICAL ERROR: Log was not successfully initialized before attempting to initialise semaphores!\n");
+		lockInitFailed = -1;
+	}
+	
+	/*
+	if(lockInitFailed == 1){
+		pigpio_stop(pi);
+		fclose(log);
+		exit(1);
+	}
+	*/
+	
+	return lockInitFailed;
+}
+void initAll(){
+	int ret = -1;
+	if(initLog()==0){
+		if(initMutex()==0){
+			ret = 0;
+		}else{
+			log_output("ERROR: Mutex initialization failed.");
+		}
+	}else{
+		printf("ERROR: Log initialization failed.");
+		fflush(stdout);
+	}
+	
+	if(ret == -1){
+		if(log != NULL){
+			log_output("CRITICAL ERROR: Initialization failed, halting process...");
+			fclose(log);
+		}
+		exit(1);
+	}
 }

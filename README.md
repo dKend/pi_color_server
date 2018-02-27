@@ -1,5 +1,16 @@
 # pi_color_server
 pi_color_server (pcs) is a project I have been working on for a year or so intended to improve my C programming skills and to be a way to control a RGB color strip attached to a Raspberry Pi Model B using the pigpio C library.
+# Features (In Progress)
+ - [x] Allow control of an RGB LED strip without easily through the bash shell
+ - [x] Persistant storage of the last color used
+ - [x] Ability to set a static color
+ - [ ] Ability to set a color cycle that follows a sine curve
+ - [ ] Ability to schedule multiple color cycles
+ - [ ] Ability to specify the order in which cycles occur
+ - [ ] Ability to specify event triggers for specified cycles
+ - [ ] Ability to save and load a cycle
+ - [ ] JSON configuration support
+ - [ ] An additional library to allow for aditional features
 # Requirements
  - Raspberry Pi Model B or newer.
  - pigpio library

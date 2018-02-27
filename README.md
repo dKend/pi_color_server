@@ -3,8 +3,8 @@ pi_color_server (pcs) is a project I have been working on for a year or so inten
 # Requirements
  - Raspberry Pi Model B or newer.
  - pigpio library
-  - Installation instructions here: http://abyz.me.uk/rpi/pigpio/download.html
-  - Github page: https://github.com/joan2937/pigpio
+   - Installation instructions here: http://abyz.me.uk/rpi/pigpio/download.html
+   - pigpio github page: https://github.com/joan2937/pigpio
  - In order for the server to work, the pigpiod daemon must be running.
  - LED strip setup: https://dordnung.de/raspberrypi-ledstrip/#%2F
 # Basic Usage

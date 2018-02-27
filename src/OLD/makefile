@@ -17,42 +17,18 @@ test: testPigpiodFunctions.o assertion.o
 testPigpiodFunctions.o: testPigpiodFunctions.c
 	gcc -Wall -pthread -c testPigpiodFunctions.c -lpigpiod_if2 -lrt
 	
-test_assertion: assertion.o test_assertion.o
-	gcc -Wall assertion.o test_assertion.o -o test_assertion
-	
-test_assertion.o: test_assertion.c
-	gcc -Wall -c test_assertion.c
-	
 assertion.o: assertion.c
 	gcc -Wall -c assertion.c
 	
-test_threadList: assertion.o test_threadList.o threadList.o
-	gcc -Wall -lpthread test_threadList.o assertion.o threadList.o -o test_threadList
+test1: test_threadList.o assertion.o threadList.o
+	gcc -Wall -lpthread test_threadList.o assertion.o threadList.o -o test1
 	
-test_threadList.o: test_threadList.c 
+test_threadList.o: test_threadList.c
 	gcc -Wall -lpthread -c test_threadList.c
 
 threadList.o: threadList.c
-	gcc -Wall -lpthread -c threadList.c
+	gcc -Wall -c threadList.c
 	
-test_list: test_list.o assertion.o lists
-	gcc -Wall assertion.o dstruct/lists.o test_list.o -o test_list
-	
-test_list.o: test_list.c
-	gcc -Wall -c test_list.c
-	
-lists:
-	make -C dstruct
-	
-test_color: test_color.o assertion.o color.o lists
-	gcc -Wall -lm color.o test_color.o assertion.o dstruct/lists.o -o test_color
-
-test_color.o: test_color.c
-	gcc -Wall -c test_color.c
-	
-color.o: color.c
-	gcc -Wall -c color.c
-
 cleanup_prev_install: 
 	if[ -e /bin/pcs-server ]
 		@echo Previous version of pcs-server found.

@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "assertion.h"
+
+int testCreateServer();
+int testFreeServer();
+int testInitServer();
+int testRunServer();
+int testGetColorChanged();
+int testSetColorChanged();
+int testUnsetColorChanged();
+int testSetColor();
+int testColorChangedActions();
+int testListenLoop();
+int testProcessRequest();
+int testApply_brightness();
+int testSetListen();
+int testUnsetListen();
+int testLog_output();
+int testThreadHandleConnection();

@@ -1,12 +1,12 @@
 #include "dstruct/lists.h"
-typedef struct  color{
+typedef struct {
 	unsigned int red;
 	unsigned int green;
 	unsigned int blue;
 	unsigned int brightness;
 	unsigned int delay;
 }color;
-typedef struct colorPair{
+typedef struct colorPair {
 	color start;
 	color end;
 }colorPair;
@@ -38,7 +38,7 @@ int freeColorList(colorList** self);
 int printColorList(colorList* self);
 int sin_cycle(float time, float wavelength);
 int sin_color_cycle(float time, float wavelength, int start, int end);
-void genSinCurveColorList(colorList* self, float wavelength, colorPair pair, int delay_ns);
+int genSinCurveColorList(colorList* self, float wavelength, colorPair pair, int delay_ns);
 
 void genFadeColorList(colorList* self, float wavelength, colorPair pair);
 void saveColorList(colorList* self);

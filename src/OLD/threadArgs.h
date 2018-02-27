@@ -1,8 +1,8 @@
-#include <sys/types.h>
 typedef struct threadArgs{
 	int pi;
 	int sock;
-}threadArgs;
+} threadArgs;
+
 void initThreadArgs(threadArgs** self, int pi, int sock);
 void freeThreadArgs(threadArgs** self);
 int getPi(struct threadArgs* self);

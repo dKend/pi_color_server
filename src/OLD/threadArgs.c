@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "threadArgs.h"
+#include "assertion.h"
 
 void initThreadArgs(threadArgs** self, int pi, int sock){
 	if(self != NULL){

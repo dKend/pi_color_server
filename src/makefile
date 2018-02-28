@@ -1,7 +1,7 @@
 main: pcsd pcs
 	@echo Build Completed.
 	
-install: cleanup_prev_install pcs-server pcs-client
+install: cleanup_prev_install pcsd pcs
 	mv pcsd /bin
 	mv pcs /bin
 	
@@ -10,6 +10,9 @@ pcsd: server.c
 	
 pcs: client.c
 	gcc -Wall -o pcs client.c
+
+test_all: testPigpiodFunctions test_assertion test_threadList test_list test_color
+	
 
 test: testPigpiodFunctions.o assertion.o
 	gcc -Wall -pthread testPigpiodFunctions.o assertion.o -o test0 -lpigpiod_if2 -lrt

@@ -1,0 +1,12 @@
+language: c
+
+compiler:
+  - gcc
+
+script:
+  - make -C src test_all
+  - ./src/test_assertion
+  - ./src/test0
+  - ./src/test_list
+  - ./src/test_threadList
+  - ./src/test_color

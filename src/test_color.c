@@ -26,7 +26,7 @@ int main(){
 	registerTest(testAddColorList, "testAddColorList");
 	registerTest(testFreeColorList, "testFreeColorList");
 	registerTest(testSinColorCycle, "testSinColorCycle");
-	//registerTest(testGenSinCurveColorList, "testGenSinCurveColorList");
+	registerTest(testGenSinCurveColorList, "testGenSinCurveColorList");
 	//registerTest(testGenerateFadeToColor, "testGenerateFadeToColor");
 	runTests();
 	destroyTests();
@@ -235,9 +235,64 @@ int testGenSinCurveColorList(){
 	color c1 = {0, 0, 0, 0, 100};
 	colorPair pair = {c0, c1};
 	setUp(&self);
-	assertTrue(genSinCurveColorList(NULL, 0.0, pair, 0.0) == -1, "1", &ret);
-	assertTrue(genSinCurveColorList(NULL, 0.0, pair, 1.0) == -1, "2", &ret);
-	assertTrue(genSinCurveColorList(NULL, 0.0, pair, -1.0) == -1, "3", &ret);
+	//wavelength is in SECONDS, delay_ns is in NANOSECONDS
+	
+	//failure cases
+	assertTrue(genSinCurveColorList(NULL, 0, pair, 0) == -1, "1", &ret);	// delay and wavelength are both zero
+	assertTrue(genSinCurveColorList(NULL, 0, pair, 1) == -1, "2", &ret);	// delay is greater than wavelength
+	assertTrue(genSinCurveColorList(NULL, 0, pair, -1) == -1, "3", &ret);	// delay is greater than wavelength
+	
+	assertTrue(genSinCurveColorList(NULL, 1, pair, 0) == -1, "4", &ret);	// delay is zero
+	assertTrue(genSinCurveColorList(NULL, 1, pair, 1) == -1, "5", &ret);	// list is null
+	assertTrue(genSinCurveColorList(NULL, 1, pair, -1) == -1, "6", &ret);	// delay > wavelength
+	
+	assertTrue(genSinCurveColorList(NULL, -1, pair, 0) == -1, "7", &ret);	// delay is zero
+	assertTrue(genSinCurveColorList(NULL, -1, pair, 1) == -1, "8", &ret);	// list is null
+	assertTrue(genSinCurveColorList(NULL, -1, pair, -1) == -1, "9", &ret);	// list is null
+	
+	assertTrue(genSinCurveColorList(self, 0, pair, 0) == -1, "10", &ret);	// delay is zero
+	assertTrue(genSinCurveColorList(self, 0, pair, 1) == -1, "11", &ret);	// delay > wavelength
+	assertTrue(genSinCurveColorList(self, 0, pair, -1) == -1, "12", &ret);	// delay > wavelength
+	
+	assertTrue(genSinCurveColorList(self, 1, pair, 0) == -1, "13", &ret);	// delay is zero
+	
+	assertTrue(genSinCurveColorList(self, 1, pair, -1) == -1, "14", &ret);
+	
+	assertTrue(genSinCurveColorList(self, -1, pair, 0) == -1, "15", &ret);
+	assertTrue(genSinCurveColorList(self, -1, pair, 1) == -1, "16", &ret);
+	assertTrue(genSinCurveColorList(self, -1, pair, -1) == -1, "17", &ret);
+	
+	// success case
+	assertTrue(genSinCurveColorList(self, 1.0, pair, 1000000) == 0, "18", &ret);
+	
+	if(assertTrue(self!=NULL, "14", &ret)){
+		
+		// check the head and tail of the generated list
+		if(assertTrue(self->head != NULL, "19", &ret)){
+			if(assertTrue(self->head->data != NULL, "20", &ret)){
+				assertTrue(((color*)(self->head->data))->red == c0.red, "21", &ret);
+				assertTrue(((color*)(self->head->data))->green == c0.green, "22", &ret);
+				assertTrue(((color*)(self->head->data))->blue == c0.blue, "23", &ret);
+				assertTrue(((color*)(self->head->data))->brightness == c0.brightness, "24", &ret);
+				assertTrue(((color*)(self->head->data))->delay == 1000000, "25", &ret);
+			}
+		}
+		// check the tail
+		if(assertTrue(self->tail != NULL, "26", &ret)){
+			if(assertTrue(self->tail->data != NULL, "27", &ret)){
+				assertTrue(((color*)(self->tail->data))->red == c1.red, "28", &ret);
+				assertTrue(((color*)(self->tail->data))->green == c1.green, "29", &ret);
+				assertTrue(((color*)(self->tail->data))->blue == c1.blue, "30", &ret);
+				assertTrue(((color*)(self->tail->data))->brightness == c1.brightness, "31", &ret);
+				assertTrue(((color*)(self->tail->data))->delay == 1, "32", &ret);
+			}
+		}
+	}
 	tearDown(&self);
+	return ret;
+}
+int testGenerateFadeToColor(){
+	int ret = -1;
+	
 	return ret;
 }

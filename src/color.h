@@ -36,9 +36,8 @@ int initColorList(colorList** self);
 int addColorList(colorList* self, color* n);		
 int freeColorList(colorList** self);
 int printColorList(colorList* self);
-int sin_cycle(float time, float wavelength);
-int sin_color_cycle(float time, float wavelength, int start, int end);
-void genSinCurveColorList(colorList* self, float wavelength, colorPair pair, int delay_ns);
+//int sin_cycle(float time, float wavelength);
+int genSinCurveColorList(colorList* self, int wavelength, colorPair pair, int delay_ns);
 
 void genFadeColorList(colorList* self, float wavelength, colorPair pair);
 void saveColorList(colorList* self);
@@ -52,3 +51,8 @@ int freeColorListQueue(colorListQueue** self);
 int initColorListQueueNode(node** self);
 int updateColorListQueueNode(node* self);
 int isComplete(node* self);
+
+// error number globals
+unsigned int getCERR();
+int getCERRMessage(char** str);
+

@@ -4,9 +4,11 @@ compiler:
   - gcc
 
 script:
-  - make -C src test_all
+  - make -C src test_assertion
+  - make -C src test_list
+  - make -C src test_color
+  - make -C src test_threadList
   - ./src/test_assertion
-  - ./src/test0
   - ./src/test_list
   - ./src/test_threadList
   - ./src/test_color

@@ -53,8 +53,8 @@ test_color: test_color.o assertion.o color.o lists
 test_color.o: test_color.c
 	gcc -Wall -c test_color.c
 	
-color.o: color.c
-	gcc -Wall -c color.c
+Color.o: Color.c
+	gcc -Wall -c Color.c
 
 cleanup_prev_install: 
 	if[ -e /bin/pcs-server ]

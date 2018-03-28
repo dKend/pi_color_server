@@ -15,7 +15,8 @@ int testRemEnd();
 int testListLen();
 int testFreeNode();
 int testFreeList();
-
+int testBreakCyclicList();
+int testFreeListCyclic();
 int main(){
 	int ret = 0;
 	registerTest(testCreateNode, "testCreateNode");
@@ -26,8 +27,10 @@ int main(){
 	registerTest(testListLen, "testListLen");
 	registerTest(testFreeNode, "testFreeNode");
 	registerTest(testFreeList, "testFreeList");
+	registerTest(testBreakCyclicList, "testBreakCyclicList");
+	registerTest(testFreeListCyclic, "testFreeListCyclic");
 	ret = runTests();
-	//destroyTests();
+	destroyTests();
 	return ret;
 }
 void setUpList(node** self){
@@ -427,6 +430,87 @@ int testFreeList(){
 	assertTrue(free_list(NULL) == -1, "free_list doesnt fail on NULL.", &ret);
 	assertTrue(free_list(&node0) == 0, "free_list fails on a 3 element list.", &ret);
 	assertTrue(node0 == NULL, "free_list doesnt NULL the passed head node.", &ret);
+	if(ret == 0){
+		node0->next = NULL;
+		node1->next = NULL;
+		node2->next = NULL;
+		node0->data = NULL;
+		node1->data = NULL;
+		node2->data = NULL;
+		free(ptr0);
+		free(ptr1);
+		free(ptr2);
+		free(node0);
+		free(node1);
+		free(node2);
+	}
+	return ret;
+}
+
+int testBreakCyclicList(){
+	int ret = -1;
+	//build a cyclic list
+	int* ptr0;
+	int* ptr1;
+	int* ptr2;
+	ptr0 = (int*)malloc(sizeof(int));
+	ptr1 = (int*)malloc(sizeof(int));
+	ptr2 = (int*)malloc(sizeof(int));
+	node* node0;
+	node* node1;
+	node* node2;
+	node0 = (node*)malloc(sizeof(node));
+	node1 = (node*)malloc(sizeof(node));
+	node2 = (node*)malloc(sizeof(node));
+	node0->data = ptr0;
+	node1->data = ptr1;
+	node2->data = ptr2;
+	node0->next = node1;
+	node1->next = node2;
+	node2->next = node0;
+	assertEqualsInt(0, breakCyclicList(&node0), "1", &ret);
+	assertTrue(node2->next == NULL, "2", &ret);
+	assertEqualsInt(-1, breakCyclicList(&node0), "3", &ret);
+	assertEqualsInt(-1, breakCyclicList(NULL), "4", &ret);
+	//destroy the cyclic list
+	node0->next = NULL;
+	node1->next = NULL;
+	node2->next = NULL;
+	node0->data = NULL;
+	node1->data = NULL;
+	node2->data = NULL;
+	free(ptr0);
+	free(ptr1);
+	free(ptr2);
+	free(node0);
+	free(node1);
+	free(node2);
+	return ret;
+}
+
+int testFreeListCyclic(){
+	int ret = -1;
+	int* ptr0;
+	int* ptr1;
+	int* ptr2;
+	ptr0 = (int*)malloc(sizeof(int));
+	ptr1 = (int*)malloc(sizeof(int));
+	ptr2 = (int*)malloc(sizeof(int));
+	node* node0;
+	node* node1;
+	node* node2;
+	node0 = (node*)malloc(sizeof(node));
+	node1 = (node*)malloc(sizeof(node));
+	node2 = (node*)malloc(sizeof(node));
+	node0->data = ptr0;
+	node1->data = ptr1;
+	node2->data = ptr2;
+	node0->next = node1;
+	node1->next = node2;
+	node2->next = node0;
+	assertEqualsInt(-1, free_list(NULL), "1", &ret);
+	assertEqualsInt(0, free_list(&node0), "2", &ret);
+	assertTrue(node0 == NULL, "3", &ret);
 	if(ret == 0){
 		node0->next = NULL;
 		node1->next = NULL;

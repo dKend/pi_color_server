@@ -24,4 +24,13 @@ int free_node(node** n);
 // free the entire list and set *node = NULL
 int free_list(node** head);
 
+/*
+*		date:	3/9/18
+*		bug#:	0
+*		desc:	Segmentation fault on calling free_list with a cyclic list.
+*	solution:	Check for cyclic list and change to non-cyclic with breakCyclicList function.
+*
+*/
+int breakCyclicList(node** head);
+
 

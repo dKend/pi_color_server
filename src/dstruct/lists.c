@@ -7,6 +7,7 @@
 #include "lists.h"
 
 //create a node
+int free_list_helper(node** head);
 int create_node(node** self, void* data, node* next, int (*free_data)(void*)){
 	int ret = -1;
 	if(self != NULL && data != NULL){
@@ -17,7 +18,7 @@ int create_node(node** self, void* data, node* next, int (*free_data)(void*)){
 			if(free_data != NULL){
 				(*self)->free_data = free_data;
 			}else{
-				free_data = NULL;
+				(*self)->free_data = NULL;		//	Fix for bug#02, create_node didnt set new->free_data to NULL when free_data was NULL. So the free data wasnt guaranteed to be initialized to NULL.
 			}
 			ret = 0;
 		}
@@ -104,7 +105,7 @@ int print_list(const node* head){
 // free a single node
 int free_node(node** n){
 	int ret = -1;
-	if(n){
+	if(n!=NULL){
 		if((*n) != NULL){
 			if((*n)->free_data != NULL){
 				((*n)->free_data)((*n)->data);
@@ -120,16 +121,42 @@ int free_node(node** n){
 	}
 	return ret;
 }
+
 // free the entire list and set *node = NULL
+
 int free_list(node** head){
 	int ret = -1;
-	if(head){
-		if(*head){
-			free_list(&((*head)->next));
+	breakCyclicList(head);
+	ret = free_list_helper(head);
+	return ret;
+}
+int free_list_helper(node** head){
+	int ret = -1;
+	if(head != NULL){
+		if(*head != NULL){
+			free_list_helper(&((*head)->next));
 			free_node(head);
 			*head=NULL;
 			ret = 0;
 		}
 	}
+	return ret;
+}
+int breakCyclicList(node** head){
+	//	O(n) time for this method.
+	int ret = -1;
+	if(head != NULL){
+		if(*head != NULL){
+			node* current = *head;
+			while(current->next != NULL && current->next != *head){
+				current = current->next;
+			}
+			if(current->next == *head){
+				ret = 0;
+			}
+			current->next = NULL;
+		}
+	}
+	
 	return ret;
 }

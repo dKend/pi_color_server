@@ -13,6 +13,7 @@ pi_color_server (pcs) is a project I have been working on for a year or so inten
  - [ ] Ability to save and load a cycle
  - [ ] JSON configuration support
  - [ ] An additional library to allow for aditional features
+ - [ ] A API of some sort (PHP)
 # Requirements
  - Raspberry Pi Model B or newer.
  - pigpio library

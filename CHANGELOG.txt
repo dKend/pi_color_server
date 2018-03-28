@@ -1,0 +1,11 @@
+---------------------------------
+Pi Color Server Version 0.2.1a
+---------------------------------
+Changes
+ - Changed definition of sin_color_cycle function in color.h and color.c to take the first argument as a float instead of an unsigned int.
+ - Changed definition of sin_color_cycle function in color.h and color.c to take the second argument as a float instead of an unsigned int.
+ - Changed the assumed behaviour of sin_color_cycle as defined in its test function.
+ - Changed getCERRName to only take a pointer to a string. Solves an issue with testing for an error occurring when the passed value was greater than the max number of errors.
+ - Changed runTests() to print a message after a test is ran that indicates if the test passed or failed.
+Bug Fixes:
+ - Fixed: A bug where free_list would segmentation fault under certain conditions (bug#'s 01, 02, & 03).

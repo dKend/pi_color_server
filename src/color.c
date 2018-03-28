@@ -3,39 +3,15 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
-#include "color.h"
+#include "Color.h"
+#include "ColorTypeDef.h"
+#include "ColorErrorDef.h"
 
 #define MAX_COLOR 255
 #define PI 3.14
 #define MAX_SER_NODES 1024
 
-#define CERR_NOERROR 												0
-#define CERR_GenSinCurveColorList_BadWavelength_Zero 				1
-#define CERR_GenSinCurveColorList_BadDelay_Zero 					2
-#define CERR_GenSinCurveColorList_BadDelay_NotLessThanWavelength	3
-#define CERR_GenSinCurveColorList_BadColorList_NULL 				4
-#define CERR_GenSinCurveColorList_BadColorList_AlreadyInit			5
-#define CERR_SinColorCycle_BadEndpoints_StartEqualsEnd 				6
-#define CERR_SinColorCycle_BadWavelength_Zero 						7
-#define CERR_PrintColorList_BadColorList 							8
-#define CERR_FreeColorList_BadSelf_NullPointer						9
-#define CERR_FreeColorList_BadSelf_NullPointerPointer				10
-#define CERR_AddColorList_BadSelf_NULLPointer						11
-#define CERR_AddColorList_BadColor_NULLPointer						12
-#define CERR_InitColorList_BadSelf_NULLPointer						13
-#define CERR_InitColorList_BadSelf_NULLPointerPointer				14
-#define CERR_FreeColor_BadPointer									15
-#define CERR_GetCERRMessage_BadPointer								16
-#define CERR_GetCERRMessage_BadPointer_NonNULL						17
-#define CERR_GetCERRName_BadE										18
-#define CERR_GetCERRName_BadPointer									19
-#define CERR_GetCERRName_BadPointer_NonNULL							20
-#define CERR_DuplicateColor_BadSrcPointer_NULL						21
-#define CERR_DuplicateColor_BadDestPtr_NULL							22
-#define CERR_DuplicateColor_BadDestPtr_NonNULL						23
-
 static unsigned int cerr = CERR_NOERROR;
-static unsigned int CERR_MAX = 20;
 static const char* const CERR_Strings[] = {
 	"CERR_NOERROR",
 	"CERR_GenSinCurveColorList_BadWavelength_Zero",
@@ -61,8 +37,16 @@ static const char* const CERR_Strings[] = {
 	"CERR_DuplicateColor_BadSrcPointer_NULL",
 	"CERR_DuplicateColor_BadDestPtr_NULL",
 	"CERR_DuplicateColor_BadDestPtr_NonNULL",
-	
-	
+	"CERR_GenFadeColorList_WavelengthZero",
+	"CERR_GenFadeColorList_DelayZero",
+	"CERR_GenFadeColorList_DelayGtWavelength",
+	"CERR_GenFadeColorList_SelfEqNULL",
+	"CERR_GenFadeColorList_SelfInit",
+	"CERR_ColorFade_TimeGtWavelength",
+	"CERR_ColorFade_StartEqEnd",
+	"CERR_ColorFade_WavelengthEqZero",
+	"CERR_SaveColorList_AccessDenied",
+	"CERR_SaveColorList_OutOfSpace",
 };
 static const char *CERR_Messages[] = {
 	"No errors have been caught.",
@@ -88,8 +72,17 @@ static const char *CERR_Messages[] = {
 	"GetCERRName received a bad pointer, *str must be NULL.",
 	"DuplicateColor received a bad pointer, src cannot be NULL.",
 	"DuplicateColor received a bad pointer, dest cannot be NULL.",
-	"DuplicateColor received a bad pointer, *dest must be NULL."
-	
+	"DuplicateColor received a bad pointer, *dest must be NULL.",
+	"[PH]CERR_GenFadeColorList_WavelengthZero",
+	"[PH]CERR_GenFadeColorList_DelayZero",
+	"[PH]CERR_GenFadeColorList_DelayGtWavelength",
+	"[PH]CERR_GenFadeColorList_SelfEqNULL",
+	"[PH]CERR_GenFadeColorList_SelfInit",
+	"[PH]CERR_ColorFade_TimeGtWavelength",
+	"[PH]CERR_ColorFade_StartEqEnd",
+	"[PH]CERR_ColorFade_WavelengthEqZero",
+	"[PH]CERR_SaveColorList_AccessDenied",
+	"[PH]CERR_SaveColorList_OutOfSpace",
 };
 
 /*
@@ -111,7 +104,8 @@ unsigned int getCERR(){
 /*
 *	::int getCERRName()::
 *
-*		- Allocates the passed pointer and copies the name string associated with e into it.
+*		- Allocates the passed pointer and copies the name string associated 
+*		with e into it.
 *
 *	::returns::
 *
@@ -125,24 +119,17 @@ unsigned int getCERR(){
 *		[CERR_GetCERRName_BadPointer_NonNULL]
 *			- *Str was not NULL.
 *
-*		[CERR_GetCERRName_BadE]
-*			- E is not a valid cerror number.
-*
 */
-int getCERRName(unsigned int e, char** str){
+int getCERRName(char** str){
 	int ret = -1;
-	if(e <= CERR_MAX){
-		if(str != NULL){
-			if(*str != NULL){
-				*str = strdup(CERR_Strings[e]);
-				ret = 0;
-			}else
-				cerr = CERR_GetCERRName_BadPointer_NonNULL;
+	if(str != NULL){
+		if(*str != NULL){
+			*str = strdup(CERR_Strings[getCERR()]);
+			ret = 0;
 		}else
-			cerr = CERR_GetCERRName_BadPointer;
+			cerr = CERR_GetCERRName_BadPointer_NonNULL;
 	}else
-		cerr = CERR_GetCERRName_BadE;
-	
+		cerr = CERR_GetCERRName_BadPointer;
 	return ret;
 }
 
@@ -330,14 +317,15 @@ int printColorList(colorList* self){
 	int ret = -1;
 	if(self!=NULL){
 		node* current = self->head;
+		printf("\n");
 		while(current != NULL){
 			color* data = (color*)current->data;
 			printf("{red: %d, green: %d, blue: %d, bright: %d, delay: %d}\n", data->red, data->green, data->blue, data->brightness, data->delay);
-			printf("\t\t|\n");
-			printf("\t\tV\n");
 			current = current->next;
 			
 		}
+		printf("\n");
+		fflush(stdout);
 		ret = 0;
 	}else
 		cerr = CERR_PrintColorList_BadColorList;
@@ -361,23 +349,51 @@ int printColorList(colorList* self){
 *		[CERR_SinColorCycle_BadWavelength_Zero]
 *			- Wavelength is zero (division by zero avoidance).
 */
-int sin_color_cycle(unsigned int time, unsigned int wavelength, int start, int end){
+int sin_color_cycle(float time, float wavelength, int start, int end){
 	//time - current time
 	//wavelength - length in time units of 1 wave
 	//offset - relative to sine function max range[0, 1]
 	int ret = -1;
-	if(start != end){
-		if(wavelength != 0){
+	if(wavelength != 0){
+		if(start != end){
 			float midpoint = (start + end)/2;
-			float amplitude = (end - start)/2;
-			float offset = (midpoint/amplitude);
-			float rad = (((2*PI)*time)/wavelength)+((3*PI)/2);
-			//printf("%f\n", rad);
-			ret = (int)amplitude*((offset)+sin(rad));
+			if(end > start){
+				if(time == 0){
+					ret = (int)start;
+				}else if(time == wavelength){
+					ret = (int)start;
+				}else if(time == (wavelength/2.0)){
+					ret = (int)end;
+				}else{
+					// Old implementation using sin curve
+					float amplitude = (end - start)/2;
+					float offset = (midpoint/amplitude);
+					float rad = (((2*PI)*time)/wavelength)+((3*PI)/2);
+					//printf("%f\n", rad);
+					ret = (int)amplitude*((offset)+sin(rad));
+				}
+			}else{
+				if(time == 0){
+					ret = (int)start;
+				}else if(time == wavelength){
+					ret = (int)start;
+				}else if(time == (wavelength/2.0)){
+					ret = (int)end;
+				}else{
+					// Old implementation using sin curve
+					float amplitude = (start - end)/2;
+					float offset = (midpoint/amplitude);
+					float rad = (((2*PI)*time)/wavelength)+(PI/2);
+					//printf("%f\n", rad);
+					ret = (int)amplitude*((offset)+sin(rad));
+				}
+				
+			}
+			
 		}else
-			cerr = CERR_SinColorCycle_BadWavelength_Zero;
+			cerr = CERR_SinColorCycle_BadEndpoints_StartEqualsEnd;
 	}else
-		cerr = CERR_SinColorCycle_BadEndpoints_StartEqualsEnd;
+		cerr = CERR_SinColorCycle_BadWavelength_Zero;
 
 	
 	return ret;
@@ -388,7 +404,7 @@ int sin_color_cycle(unsigned int time, unsigned int wavelength, int start, int e
 *
 *		- generates a colorList which is a fade from one color to another (specified in the colorPair variable).
 *		- the generated list is placed in the head node of the self argument (tail is also set).
-*	 
+*	 	- wavelength is in SECONDS, delay_ns is in NANOSECONDS
 *	::return::
 *
 *		 - 0 on success and -1 on error, indicating that an error has occured.
@@ -417,38 +433,52 @@ int genSinCurveColorList(colorList** self, unsigned int wavelength, colorPair pa
 		if(initColorList(self) != -1){
 			if(wavelength != 0){
 				if(delay_ns != 0){
-					float time_step = delay_ns / 1000000000.0;
-					if(time_step < wavelength){
-						int err = 0;
+					float time_step = ((float)delay_ns) / 1000000000.0;
+					float lambda = (float)wavelength;
+					if(time_step < lambda){
+						ret = 0;
 						float time = 0.0;
-						while(time < wavelength){
+						float nodes = 0;
+						while(time <= lambda){
 							color* n = (color*)malloc(sizeof(color));
-							n->red = (unsigned int)sin_color_cycle(time, wavelength, pair.start.red, pair.end.red);
-							n->green = (unsigned int)sin_color_cycle(time, wavelength, pair.start.green, pair.end.green);
-							n->blue = (unsigned int)sin_color_cycle(time, wavelength, pair.start.blue, pair.end.blue);
-							n->brightness = (unsigned int)sin_color_cycle(time, wavelength, pair.start.brightness, pair.end.brightness);
-							n->delay = (unsigned int)delay_ns;
+							n->red = (unsigned int)sin_color_cycle(time, lambda, pair.start.red, pair.end.red);
+							n->green = (unsigned int)sin_color_cycle(time, lambda, pair.start.green, pair.end.green);
+							n->blue = (unsigned int)sin_color_cycle(time, lambda, pair.start.blue, pair.end.blue);
+							n->brightness = (unsigned int)sin_color_cycle(time, lambda, pair.start.brightness, pair.end.brightness);
+							n->delay = delay_ns;
 							
 							//check if any sin_color_cycle errors occurred
 							if(n->red != -1 && n->green != -1 && n->blue != -1 && n->brightness != -1 && n->delay != -1){
 								addColorList(*self, n);
 								time+=time_step;
+								nodes++;
 							}else{
-								err = -1;
+								ret = -1;
+								freeColorList(self);
+								*self=NULL;
 								break;
 							}
 						}
-						
-						if(err != -1){
-							ret = 0;
-						}
-							
-					}else
+						color* tmp = NULL;
+						duplicateColor(&(pair.start), &tmp);
+						tmp->delay = delay_ns;
+						addColorList(*self, tmp);
+					}else{
 						cerr = CERR_GenSinCurveColorList_BadDelay_NotLessThanWavelength;
-				}else
+						freeColorList(self);
+						*self=NULL;
+					}
+				}else{
 					cerr = CERR_GenSinCurveColorList_BadDelay_Zero;
-			}else
+					freeColorList(self);
+					*self=NULL;
+				}
+			}else{
 				cerr = CERR_GenSinCurveColorList_BadWavelength_Zero;
+				freeColorList(self);
+				*self=NULL;
+			}
+				
 		}else
 			cerr = CERR_GenSinCurveColorList_BadColorList_AlreadyInit;
 	}else
@@ -497,5 +527,120 @@ int duplicateColor(color* src, color** dest){
 			cerr = CERR_DuplicateColor_BadDestPtr_NULL;
 	}else
 		cerr = CERR_DuplicateColor_BadSrcPointer_NULL;
+	return ret;
+}
+
+/*
+	Calculates the value of a fade over time from the color specified by start 
+	to the color specified by end. The value is proportional to the value of 
+	time/wavelength.
+	There are two cases that can occur when valid input is received:
+	Case 1:	Start < end
+		Steps:
+		(1)	difference = end - start
+		(2) add = difference * (time / wavelength)
+		(3) return start + add
+	Case 2: Start > end
+		Steps:
+		(1) difference = start - end
+		(2) add = difference * (time / wavelength)
+		(3) return start - add
+	We can actually factor this down to only case 1 since in the case of start >
+	end, the value of difference will be a negative number and as a result add 
+	will also be negative. So when we return the value of "start + add", in the 
+	second case this is the same as "start - add" where difference is calculated 
+	using "start - end".
+	
+	@param time float, number between 0 and wavelength
+	@param wavelength
+	@param start
+	@param end
+	@return ret
+	@error CERR_ColorFade_TimeGtWavelength
+	@error CERR_ColorFade_StartEqEnd
+	@error CERR_ColorFade_WavelengthEqZero
+*/
+int color_fade(float time, float wavelength, unsigned int start, unsigned int end){
+	int ret = -1;
+	if(time<=wavelength){
+		if(wavelength!=0){
+			if(start!=end){
+				if(start < end){
+					ret = start+((end-start)*(time/wavelength));
+				}else{
+					ret = start-((start-end)*(time/wavelength));
+				}
+			}else
+				cerr = CERR_ColorFade_StartEqEnd;
+		}else
+			cerr = CERR_ColorFade_WavelengthEqZero;
+	}else
+		cerr = CERR_ColorFade_TimeGtWavelength;
+	return ret;
+}
+
+/*
+	Creates a colorList using the fade_color function. Creates nodes in a loop 
+	and calls the color_fade function for each part of the colors passed in 
+	pair. The start color will occupy the first node and the end color will 
+	occupy the last node generated.
+	
+	@param self colorList**
+	@param wavelength unsigned int; In SECONDS 
+	@param colorPair pair
+	@param delay_ns unsigned int; In NANOSECONDS
+	@error CERR_GenFadeColorList_SelfEqNULL				1
+	@error CERR_GenFadeColorList_SelfInit				2
+	@error CERR_GenFadeColorList_WavelengthZero			3
+	@error CERR_GenFadeColorList_DelayZero				4
+	@error CERR_GenFadeColorList_DelayGtWavelength		5
+*/
+int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, unsigned int delay_ns){
+	int ret = -1;
+	if(self != NULL){
+		if((*self) == NULL){
+			if(wavelength > 0){
+				if(delay_ns > 0){
+					float time_step = ((float)delay_ns) / 1000000000.0;
+					float lambda = (float)wavelength;
+					
+					if(time_step < lambda){
+						initColorList(self); /* this should NEVER error */
+						float time = 0.0;
+						while(time <= lambda){
+							color* n = (color*)malloc(sizeof(color));
+							n->red = (unsigned int)color_fade(time, lambda, pair.start.red, pair.end.red);
+							n->green = (unsigned int)color_fade(time, lambda, pair.start.green, pair.end.green);
+							n->blue = (unsigned int)color_fade(time, lambda, pair.start.blue, pair.end.blue);
+							n->brightness = (unsigned int)color_fade(time, lambda, pair.start.brightness, pair.end.brightness);
+							n->delay = delay_ns;
+							addColorList(*self, n);
+							time+=time_step;
+						}
+						ret = 0;
+					}else
+						cerr = CERR_GenFadeColorList_DelayGtWavelength;
+				}else
+					cerr = CERR_GenFadeColorList_DelayZero;
+			}else
+				cerr = CERR_GenFadeColorList_WavelengthZero;
+		}else
+			cerr = CERR_GenFadeColorList_SelfInit;
+	}else
+		cerr = CERR_GenFadeColorList_SelfEqNULL;
+	return ret;
+}
+
+/*
+	Saves the colorList stored in self to a file somewhere in storage so it can 
+	be used again at a later time.
+	
+	@param self colorList*
+	@error CERR_SaveColorList_AccessDenied
+	@error CERR_SaveColorList_OutOfSpace
+*/
+int saveColorList(colorList* self){
+	int ret = -1;
+	
 	return ret;
 }

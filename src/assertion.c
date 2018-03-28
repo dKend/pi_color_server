@@ -55,8 +55,15 @@ int runTests(){
 		while(i < nextIndex && i < MAX_TESTS){
 			printf("Running test: %s\n", tests[i]->name);
 			fflush(stdout);
-			(tests[i]->f)();
+			int passes = (tests[i]->f)();
 			printf("\n");
+			if(passes == 1){
+				printf("%s Passed\n", tests[i]->name);
+				fflush(stdout);
+			}else{
+				printf("%s Failed\n", tests[i]->name);
+				fflush(stdout);
+			}
 			fflush(stdout);
 			i++;
 		}
@@ -64,6 +71,7 @@ int runTests(){
 	destroyTests();
 	return ret;
 }
+
 int destroyTests(){
 	int ret = -1;
 	if(nextIndex > 0){

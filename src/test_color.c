@@ -1,8 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "color.h"
+#include "Color.h"
+#include "ColorErrorDef.h"
+#include "ColorTypeDef.h"
 #include "assertion.h"
+
+#define validWavelength 1
+#define validDelay 10
+#define invalWavelength 0
+#define invalDelay1 1000000000.0
+#define invalDelay2 0
+void setUp(struct colorList** self);
+void tearDown(struct colorList** self);
 int testInitColorList();
 int testAddColorList();
 int testFreeColorList();
@@ -10,18 +20,6 @@ int testPrintColorList();
 int testSinColorCycle();
 int testGenSinCurveColorList();
 int testGenerateFadeToColor();
-void setUp(struct colorList** self);
-void tearDown(struct colorList** self);
-int testInitColorListQueue();
-int testQueueColorListQueue();
-int testDequeueColorListQueue();
-int testFreeColorListQueue();
-int testInitColorListQueueNode();
-int testUpdateColorListQueueNode();
-
-int testIsComplete();
-void setUp2(struct colorListQueue** self);
-void tearDown2(struct colorListQueue** self);
 int testGetCERR();
 int testInitColorList_Error();
 int testAddColorList_Error();
@@ -34,9 +32,16 @@ int testGetCERRMessage_Error();
 int testGetCERRName_Error();
 int testDuplicateColor();
 int testDuplicateColor_Error();
+int testColorFade();
+int testColorFade_Error();
+int testGenerateFadeToColor();
+int testGenerateFadeToColor_Error();
 
 int main(){
+	//	tests that have already been written and pass
 	registerTest(testGetCERR, "testGetCERR");
+	registerTest(testGetCERRMessage_Error, "testGetCERRMessage_Error");
+	registerTest(testGetCERRName_Error, "testGetCERRName_Error");
 	registerTest(testInitColorList_Error, "testInitColorList_Error");
 	registerTest(testAddColorList_Error, "testAddColorList_Error");
 	registerTest(testFreeColorList_Error, "testFreeColorList_Error");
@@ -44,14 +49,20 @@ int main(){
 	registerTest(testSinColorCycle_Error, "testSinColorCycle_Error");
 	registerTest(testGenSinCurveColorList_Error, "testGenSinCurveColorList_Error");
 	registerTest(testFreeColor_Error, "testFreeColor_Error");
-	registerTest(testGetCERRMessage_Error, "testGetCERRMessage_Error");
-	registerTest(testGetCERRName_Error, "testGetCERRName_Error");
 	registerTest(testInitColorList, "testInitColorList");
 	registerTest(testAddColorList, "testAddColorList");
 	registerTest(testFreeColorList, "testFreeColorList");
 	registerTest(testSinColorCycle, "testSinColorCycle");
 	registerTest(testGenSinCurveColorList, "testGenSinCurveColorList");
-	//registerTest(testGenerateFadeToColor, "testGenerateFadeToColor");
+	registerTest(testDuplicateColor_Error, "testDuplicateColor_Error");
+	registerTest(testDuplicateColor, "testDuplicateColor");
+	
+	//	tests that still need to be written
+	registerTest(testColorFade_Error, "testColorFade_Error");
+	registerTest(testColorFade, "testColorFade");
+	registerTest(testGenerateFadeToColor_Error, "testGenerateFadeToColor_Error");
+	registerTest(testGenerateFadeToColor, "testGenerateFadeToColor");
+	
 	runTests();
 	destroyTests();
 	return 0;
@@ -65,10 +76,14 @@ void setUp(colorList** self){
 }
 
 void tearDown(colorList** self){
-	free_list(&((*self)->head));
-	(*self)->head = NULL;
-	(*self)->tail = NULL;
-	free(*self);
+	if(self!=NULL){
+		if(*self!=NULL){
+			free_list(&((*self)->head));	//free_list bug found! 3/9/18 bug#00, bug#01, bug#02
+			(*self)->head = NULL;
+			(*self)->tail = NULL;
+			free(*self);
+		}
+	}
 }
 
 int testInitColorList(){
@@ -168,6 +183,7 @@ int testAddColorList(){
 	}
 	if(assertTrue(self->tail != NULL, "addColorList fails to set tail to the new node when adding a node to a n node list.", &ret) == 1){
 		assertTrue(self->tail != self->head, "addColorList sets tail to the same address as head when adding to a n node list.", &ret);
+		self->tail = NULL;
 	}
 	tearDown(&self);
 	return ret;
@@ -219,18 +235,28 @@ int testSinColorCycle(){
 	for(i=0; i<100; i++){
 		assertTrue(sin_color_cycle((float)i, 100, 0, 255) != -1, "sin_color_cycle fails when given a time value between 0 & 99.", &ret);
 	}
+	assertEqualsInt(128, sin_color_cycle(0.0, 100.0, 128, 255), "1", &ret);
+	assertEqualsInt(255, sin_color_cycle(50.0, 100.0, 128, 255), "2", &ret);
+	assertEqualsInt(128, sin_color_cycle(100.0, 100.0, 128, 255), "3", &ret);
+	
+	assertEqualsInt(255, sin_color_cycle(0.0, 1.0, 255, 0), "4", &ret);
+	assertEqualsInt(0, sin_color_cycle(0.5, 1.0, 255, 0), "5", &ret);
+	assertEqualsInt(255, sin_color_cycle(1.0, 1.0, 255, 0), "6", &ret);
 	return ret;
 }
 
 int testGenSinCurveColorList(){
 	int ret = -1;
 	colorList* self = NULL;
+	colorList* self2 = NULL;
 	color c0 = {255, 255, 255, 255, 255};
 	color c1 = {0, 0, 0, 0, 100};
 	colorPair pair = {c0, c1};
+	colorPair pair2 = {c1, c0};
 	//wavelength is in SECONDS, delay_ns is in NANOSECONDS
 	
 	//failure cases
+	
 	assertTrue(genSinCurveColorList(NULL, 0, pair, 0) == -1, "1", &ret);	// delay and wavelength are both zero
 	assertTrue(genSinCurveColorList(NULL, 0, pair, 1) == -1, "2", &ret);	// delay is greater than wavelength
 	assertTrue(genSinCurveColorList(NULL, 0, pair, -1) == -1, "3", &ret);	// delay is greater than wavelength
@@ -243,51 +269,69 @@ int testGenSinCurveColorList(){
 	assertTrue(genSinCurveColorList(NULL, -1, pair, 1) == -1, "8", &ret);	// list is null
 	assertTrue(genSinCurveColorList(NULL, -1, pair, -1) == -1, "9", &ret);	// list is null
 	
+	assertTrue(self == NULL, "NullTest1", &ret);
 	assertTrue(genSinCurveColorList(&self, 0, pair, 0) == -1, "10", &ret);	// delay is zero
+	assertTrue(self == NULL, "NullTest2", &ret);
 	assertTrue(genSinCurveColorList(&self, 0, pair, 1) == -1, "11", &ret);	// delay > wavelength
+	assertTrue(self == NULL, "NullTest3", &ret);
 	assertTrue(genSinCurveColorList(&self, 0, pair, -1) == -1, "12", &ret);	// delay > wavelength
-	
+	assertTrue(self == NULL, "NullTest4", &ret);
 	assertTrue(genSinCurveColorList(&self, 1, pair, 0) == -1, "13", &ret);	// delay is zero
-	
+	assertTrue(self == NULL, "NullTest5", &ret);
 	assertTrue(genSinCurveColorList(&self, 1, pair, -1) == -1, "14", &ret);
-	
+	assertTrue(self == NULL, "NullTest6", &ret);
 	assertTrue(genSinCurveColorList(&self, -1, pair, 0) == -1, "15", &ret);
-	assertTrue(genSinCurveColorList(&self, -1, pair, 1) == -1, "16", &ret);
+	assertTrue(self == NULL, "NullTest7", &ret);
+	//assertTrue(genSinCurveColorList(&self, -1, pair, 1) == -1, "16", &ret);	//I think this is where it starts working...
+	//assertTrue(self == NULL, "NullTest8", &ret);
 	assertTrue(genSinCurveColorList(&self, -1, pair, -1) == -1, "17", &ret);
-	
+	assertTrue(self == NULL, "NullTest9", &ret);
+	unsigned int a = -1;
+	float test = (float)a;
+	assertTrue(test == 4294967296, "numTest1", &ret);
+	assertTrue(self == NULL, "NullTest10", &ret);
 	// success case
-	assertTrue(genSinCurveColorList(&self, 1.0, pair, 1000000) == 0, "18", &ret);
+	if(!assertTrue(genSinCurveColorList(&self, 1, pair, 100000000) == 0, "18", &ret)){
+		char* message = NULL;
+		getCERRMessage(&message);
+		printf("\nCERR#: %d Message: %s\n", getCERR(), message);
+		free(message);
+	}
+	printColorList(self);
 	
-	if(assertTrue(self!=NULL, "14", &ret)){
+	if(!assertTrue(genSinCurveColorList(&self2, 1, pair2, 100000000) == 0, "18.5", &ret)){
+		char* message = NULL;
+		getCERRMessage(&message);
+		printf("\nCERR#: %d Message: %s\n", getCERR(), message);
+		free(message);
+	}
+	printColorList(self2);
+	
+	if(assertTrue(self!=NULL, "19", &ret)){
 		
 		// check the head and tail of the generated list
-		if(assertTrue(self->head != NULL, "19", &ret)){
+		if(assertTrue(self->head != NULL, "19.5", &ret)){
 			if(assertTrue(self->head->data != NULL, "20", &ret)){
 				assertTrue(((color*)(self->head->data))->red == c0.red, "21", &ret);
 				assertTrue(((color*)(self->head->data))->green == c0.green, "22", &ret);
 				assertTrue(((color*)(self->head->data))->blue == c0.blue, "23", &ret);
 				assertTrue(((color*)(self->head->data))->brightness == c0.brightness, "24", &ret);
-				assertTrue(((color*)(self->head->data))->delay == 1000000, "25", &ret);
+				assertTrue(((color*)(self->head->data))->delay == 100000000, "25", &ret);
 			}
 		}
 		// check the tail
 		if(assertTrue(self->tail != NULL, "26", &ret)){
 			if(assertTrue(self->tail->data != NULL, "27", &ret)){
-				assertTrue(((color*)(self->tail->data))->red == c1.red, "28", &ret);
-				assertTrue(((color*)(self->tail->data))->green == c1.green, "29", &ret);
-				assertTrue(((color*)(self->tail->data))->blue == c1.blue, "30", &ret);
-				assertTrue(((color*)(self->tail->data))->brightness == c1.brightness, "31", &ret);
-				assertTrue(((color*)(self->tail->data))->delay == 1, "32", &ret);
+				assertTrue(((color*)(self->tail->data))->red == c0.red, "28", &ret);
+				assertTrue(((color*)(self->tail->data))->green == c0.green, "29", &ret);
+				assertTrue(((color*)(self->tail->data))->blue == c0.blue, "30", &ret);
+				assertTrue(((color*)(self->tail->data))->brightness == c0.brightness, "31", &ret);
+				assertTrue(((color*)(self->tail->data))->delay == 100000000, "32", &ret);
 			}
 		}
 	}
+	tearDown(&self2);
 	tearDown(&self);
-	return ret;
-}
-
-int testGenerateFadeToColor(){
-	int ret = -1;
-	
 	return ret;
 }
 
@@ -312,15 +356,12 @@ int testInitColorList_Error(){
 		assertEqualsInt(0, strcmp(message, "InitColorList received a bad pointer, self cannot be NULL."), "4", &ret);
 		free(message);
 		message = NULL;
-	}else{
-		printf("cerr: %d\n", getCERR());
-		fflush(stdout);
 	}
 		
-	assertTrue(initColorList(&self) == -1, "4", &ret);
-	assertEqualsInt(14, getCERR(), "5", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "6", &ret)){
-		assertEqualsInt(0, strcmp(message, "InitColorList received a bad pointer, self* cannot be previously initialized."), "7", &ret);
+	assertTrue(initColorList(&self) == -1, "5", &ret);
+	assertEqualsInt(14, getCERR(), "6", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "7", &ret)){
+		assertEqualsInt(0, strcmp(message, "InitColorList received a bad pointer, self* cannot be previously initialized."), "8", &ret);
 		free(message);
 		message = NULL;
 	}
@@ -436,6 +477,7 @@ int testGenSinCurveColorList_Error(){
 		assertEqualsInt(0, strcmp(message, "GenSirCurveColorList received a bad wavelength value, wavelength must be greater than zero."), "4", &ret);
 		free(message);
 		message = NULL;
+		freeColorList(&self);
 	}
 	assertEqualsInt(-1, genSinCurveColorList(&self, 0, pair, 1), "5", &ret);
 	assertEqualsInt(1, getCERR(), "6", &ret);
@@ -443,103 +485,108 @@ int testGenSinCurveColorList_Error(){
 		assertEqualsInt(0, strcmp(message, "GenSirCurveColorList received a bad wavelength value, wavelength must be greater than zero."), "8", &ret);
 		free(message);
 		message = NULL;
+		freeColorList(&self);
 	}
 	
 	// all cases for CERR_GenSinCurveColorList_BadDelay_Zero (error 2)
-	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 0), "13", &ret);
-	assertEqualsInt(2, getCERR(), "14", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
-		assertEqualsInt(0, strcmp(message, "GenSirCurveColorList received a bad delay value, delay must be greater than zero."), "16", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 0), "9", &ret);
+	assertEqualsInt(2, getCERR(), "10", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "11", &ret)){
+		assertEqualsInt(0, strcmp(message, "GenSirCurveColorList received a bad delay value, delay must be greater than zero."), "12", &ret);
 		free(message);
 		message = NULL;
+		
+		freeColorList(&self);
 	}
 	
 	// all cases for CERR_GenSinCurveColorList_BadDelay_NotLessThanWavelength (error 3)
-	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 1), "17", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 1000000000), "13", &ret);
+	assertEqualsInt(3, getCERR(), "14", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
+		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad delay value, delay must be less than wavelength."), "16", &ret);
+		free(message);
+		message = NULL;
+		freeColorList(&self);
+	}
+	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 2000000000), "17", &ret);
 	assertEqualsInt(3, getCERR(), "18", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "19", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad delay value, delay must be less than wavelength."), "20", &ret);
 		free(message);
 		message = NULL;
-	}
-	assertEqualsInt(-1, genSinCurveColorList(&self, 1, pair, 2), "21", &ret);
-	assertEqualsInt(3, getCERR(), "22", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "23", &ret)){
-		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad delay value, delay must be less than wavelength."), "24", &ret);
-		free(message);
-		message = NULL;
+		freeColorList(&self);
 	}
 	
 	// all cases for CERR_GenSinCurveColorList_BadColorList_NULL (error 4)
-	assertEqualsInt(-1, genSinCurveColorList(NULL, 0, pair, 0), "25", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(NULL, 0, pair, 0), "21", &ret);
+	assertEqualsInt(4, getCERR(), "22", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "23", &ret)){
+		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "24", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genSinCurveColorList(NULL, 0, pair, 1), "25", &ret);
 	assertEqualsInt(4, getCERR(), "26", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "27", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "28", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(NULL, 0, pair, 1), "29", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 0), "29", &ret);
 	assertEqualsInt(4, getCERR(), "30", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "31", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "32", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 0), "33", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 1), "33", &ret);
 	assertEqualsInt(4, getCERR(), "34", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "35", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "36", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 1), "37", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 2), "37", &ret);
 	assertEqualsInt(4, getCERR(), "38", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "39", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "40", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(NULL, 1, pair, 2), "41", &ret);
-	assertEqualsInt(4, getCERR(), "42", &ret);
+	
+	// all cases for CERR_GenSinCurveColorList_BadColorList_AlreadyInit (error 5)
+	assertEqualsInt(-1, genSinCurveColorList(&bself, 0, pair, 0), "41", &ret);
+	assertEqualsInt(5, getCERR(), "42", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "43", &ret)){
-		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be NULL."), "44", &ret);
+		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "44", &ret);
 		free(message);
 		message = NULL;
 	}
-	
-	// all cases for CERR_GenSinCurveColorList_BadColorList_AlreadyInit (error 5)
-	assertEqualsInt(-1, genSinCurveColorList(&bself, 0, pair, 0), "45", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&bself, 0, pair, 1), "45", &ret);
 	assertEqualsInt(5, getCERR(), "46", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "47", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "48", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(&bself, 0, pair, 1), "49", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 0), "49", &ret);
 	assertEqualsInt(5, getCERR(), "50", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "51", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "52", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 0), "53", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 1), "53", &ret);
 	assertEqualsInt(5, getCERR(), "54", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "55", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "56", &ret);
 		free(message);
 		message = NULL;
 	}
-	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 1), "57", &ret);
+	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 2), "57", &ret);
 	assertEqualsInt(5, getCERR(), "58", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "59", &ret)){
 		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "60", &ret);
-		free(message);
-		message = NULL;
-	}
-	assertEqualsInt(-1, genSinCurveColorList(&bself, 1, pair, 2), "61", &ret);
-	assertEqualsInt(5, getCERR(), "62", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "63", &ret)){
-		assertEqualsInt(0, strcmp(message, "GenSinCurveColorList received a bad pointer, self cannot be initialized."), "64", &ret);
 		free(message);
 		message = NULL;
 	}
@@ -567,14 +614,14 @@ int testGetCERRMessage_Error(){
 	assertEqualsInt(-1, getCERRMessage(NULL), "1", &ret);	// 3/5/18, segmentation fault in this function call.
 	assertEqualsInt(16, getCERR(), "2", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "3", &ret)){
-		assertEqualsInt(0, strcmp(message, "CERR_GetCERRMessage_BadPointer"), "4", &ret);
+		assertEqualsInt(0, strcmp(message, "GetCERRMessage received a bad pointer, str cannot be NULL."), "4", &ret);
 	}
 	if(assertEqualsInt(-1, getCERRMessage(&message), "5", &ret)){
 		assertEqualsInt(17, getCERR(), "6", &ret);
 		free(message);
 		message = NULL;
 		if(assertTrue(getCERRMessage(&message) != -1, "7", &ret)){
-			assertEqualsInt(0, strcmp(message, "GetCERRName received a bad pointer, str cannot be NULL."), "8", &ret);
+			assertEqualsInt(0, strcmp(message, "GetCERRMessage received a bad pointer, *str must be NULL."), "8", &ret);
 			free(message);
 			message = NULL;
 		}
@@ -588,32 +635,8 @@ int testGetCERRName_Error(){
 	char* message = NULL;
 	char* name = NULL;
 	
-	// all cases for CERR_GetCERRName_BadE (error 18)
-	assertEqualsInt(-1, getCERRName(24, NULL), "1", &ret);
-	assertEqualsInt(18, getCERR(), "2", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "3", &ret)){
-		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad e value, e is not a valid cerror number."), "4", &ret);
-		free(message);
-		message = NULL;
-	}
-	assertEqualsInt(-1, getCERRName(24, &name), "5", &ret);
-	assertEqualsInt(18, getCERR(), "6", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "7", &ret)){
-		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad e value, e is not a valid cerror number."), "8", &ret);
-		free(message);
-		message = NULL;
-	}
-	getCERRName(0, &name);
-	assertEqualsInt(-1, getCERRName(24, &name), "9", &ret);
-	assertEqualsInt(18, getCERR(), "10", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "11", &ret)){
-		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad e value, e is not a valid cerror number."), "12", &ret);
-		free(message);
-		message = NULL;
-	}
-	
 	// all cases for CERR_GetCERRName_BadPointer (error 19)
-	assertEqualsInt(-1, getCERRName(0, NULL), "13", &ret);
+	assertEqualsInt(-1, getCERRName(NULL), "13", &ret);
 	assertEqualsInt(19, getCERR(), "14", &ret);
 	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
 		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad pointer, str cannot be NULL."), "16", &ret);
@@ -621,17 +644,19 @@ int testGetCERRName_Error(){
 		message = NULL;
 	}
 	
-	// all cases for CERR_GetCERRName_BadPointer_NonNULL (error 20)
-	assertEqualsInt(-1, getCERRName(0, &name), "13", &ret);
-	assertEqualsInt(20, getCERR(), "14", &ret);
-	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
-		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad pointer, *str must be NULL."), "16", &ret);
+	// all cases for CERR_GetCERRMessage_BadPointer_NonNULL (error 20)
+	getCERRName(&name);	// fill name with garbo data
+	assertEqualsInt(-1, getCERRName(&name), "9", &ret);
+	assertEqualsInt(20, getCERR(), "10", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "11", &ret)){
+		assertEqualsInt(0, strcmp(message, "GetCERRName received a bad pointer, *str must be NULL."), "12", &ret);
 		free(message);
 		message = NULL;
 	}
 	
 	return ret;
 }
+
 int testDuplicateColor_Error(){
 	int ret = -1;
 	color c0 = {255, 128, 64, 32, 16};
@@ -692,5 +717,263 @@ int testDuplicateColor(){
 		free(c1);
 	}
 	
+	return ret;
+}
+
+int testGenerateFadeToColor(){
+	int ret = -1;
+	color c0 = {0, 0, 0, 0, 0};
+	color c1 = {255, 255, 255, 255, 255};
+	colorPair pair = {c0, c1};		//low to high
+	colorList* self = NULL;
+	
+	// test low to high functionality -- this is done by color_fade
+	if(!assertEqualsInt(0, genFadeColorList(&self, 100, pair, 1000000000), "1", &ret)){
+		char* message = NULL;
+		getCERRMessage(&message);
+		printf("\nCERRMessage: %s\n", message);
+		fflush(stdout);
+		free(message);
+	}
+	if(assertTrue(self!=NULL, "nullCheck1", &ret)){
+		if(assertTrue(self->head != NULL, "nullCheck2", &ret) && assertTrue(self->tail != NULL, "nullCheck3", &ret)){
+			// check step 0
+			if(assertTrue(self->head->data!=NULL, "nullCheck4", &ret)){
+				assertTrue(((color*)(self->head->data))->red == c0.red, "2", &ret);
+				assertTrue(((color*)(self->head->data))->green == c0.green, "3", &ret);
+				assertTrue(((color*)(self->head->data))->blue == c0.blue, "4", &ret);
+				assertTrue(((color*)(self->head->data))->brightness == c0.brightness, "5", &ret);
+				assertTrue(((color*)(self->head->data))->delay == c0.delay, "6", &ret);
+			}
+			
+			// check step 100
+			if(assertTrue(self->tail->data != NULL, "nullCheck7", &ret)){
+				assertTrue(((color*)(self->tail->data))->red == c1.red, "12", &ret);
+				assertTrue(((color*)(self->tail->data))->green == c1.green, "13", &ret);
+				assertTrue(((color*)(self->tail->data))->blue == c1.blue, "14", &ret);
+				assertTrue(((color*)(self->tail->data))->brightness == c1.brightness, "15", &ret);
+				assertTrue(((color*)(self->tail->data))->delay == c1.delay, "16", &ret);
+			}
+		}
+		assertTrue(self->nodeCount == 101, "17", &ret);
+	}
+	tearDown(&self);
+	return ret;
+}
+
+int testGenerateFadeToColor_Error(){
+	int ret = -1;
+	char* message = NULL;
+	colorList* self = NULL;
+	colorList* self2 = NULL;
+	color c0 = {0, 0, 0, 0, 0};
+	color c1 = {255, 255, 255, 255, 255};
+	colorPair pair = {c0, c1};
+	setUp(&self);
+	
+	/*
+	*	Test that checking for NULL happens first.
+	*	CERR_GenFadeColorList_SelfEqNULL error number 27
+	*/
+	assertEqualsInt(-1, genFadeColorList(NULL, validWavelength, pair, validDelay), "1", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "2", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "3", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "4", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(NULL, validWavelength, pair, invalDelay1), "5", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "6", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "7", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "8", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(NULL, validWavelength, pair, invalDelay2), "9", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "10", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "11", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "12", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(NULL, invalWavelength, pair, validDelay), "13", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "14", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "16", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(NULL, invalWavelength, pair, invalDelay1), "17", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "18", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "19", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "20", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(NULL, invalWavelength, pair, invalDelay2), "21", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfEqNULL, getCERR(), "22", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "23", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfEqNULL"), "24", &ret);
+		free(message);
+		message = NULL;
+	}
+	
+	/*	
+	*	Test that checking if the list is already initialized next.
+	*	CERR_GenFadeColorList_SelfInit error number 28.
+	*/
+	assertEqualsInt(-1, genFadeColorList(&self, validWavelength, pair, validDelay), "25", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "26", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "27", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "28", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self, validWavelength, pair, invalDelay1), "29", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "30", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "31", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "32", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self, validWavelength, pair, invalDelay2), "33", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "34", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "35", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "36", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self, invalWavelength, pair, validDelay), "37", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "38", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "39", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "40", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self, invalWavelength, pair, invalDelay1), "41", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "42", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "43", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "44", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self, invalWavelength, pair, invalDelay2), "45", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_SelfInit, getCERR(), "46", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "47", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_SelfInit"), "48", &ret);
+		free(message);
+		message = NULL;
+	}
+	
+	/*
+	*	Test checking that wavelength is greater than zero.
+	*	CERR_GenFadeColorList_WavelengthZero
+	*/
+	assertEqualsInt(-1, genFadeColorList(&self2, invalWavelength, pair, validDelay), "49", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_WavelengthZero, getCERR(), "50", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "51", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_WavelengthZero"), "52", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self2, invalWavelength, pair, invalDelay1), "53", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_WavelengthZero, getCERR(), "54", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "55", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_WavelengthZero"), "56", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, genFadeColorList(&self2, invalWavelength, pair, invalDelay2), "57", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_WavelengthZero, getCERR(), "58", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "59", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_WavelengthZero"), "60", &ret);
+		free(message);
+		message = NULL;
+	}
+	
+	/*
+	*	Test that checking that delay > 0 occurs.
+	*	CERR_GenFadeColorList_DelayZero
+	*/
+	assertEqualsInt(-1, genFadeColorList(&self2, validWavelength, pair, invalDelay2), "61", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_DelayZero, getCERR(), "62", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "63", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_DelayZero"), "64", &ret);
+		free(message);
+		message = NULL;
+	}
+	
+	/*
+	*	Test that checking that delay < wavelength occurs.
+	*	CERR_GenFadeColorList_DelayGtWavelength
+	*/
+	assertEqualsInt(-1, genFadeColorList(&self2, validWavelength, pair, invalDelay1), "65", &ret);
+	assertEqualsInt(CERR_GenFadeColorList_DelayGtWavelength, getCERR(), "66", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "67", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_GenFadeColorList_DelayGtWavelength"), "68", &ret);
+		free(message);
+		message = NULL;
+	}
+	
+	tearDown(&self);
+	return ret;
+}
+
+int testColorFade(){
+	int ret = -1;
+	assertEqualsInt(0, color_fade(0, 100, 0, 255), "1", &ret);
+	assertEqualsInt(127, color_fade(50, 100, 0, 255), "2", &ret);
+	assertEqualsInt(255, color_fade(100, 100, 0, 255), "3", &ret);
+	assertEqualsInt(255, color_fade(0, 100, 255, 0), "4", &ret);
+	assertEqualsInt(127, color_fade(50, 100, 255, 0), "5", &ret);
+	assertEqualsInt(0, color_fade(100, 100, 255, 0), "6", &ret);
+	return ret;
+}
+
+int testColorFade_Error(){
+	int ret = -1;
+	char* message = NULL;
+	assertEqualsInt(-1, color_fade(0, 0, 0, 0), "1", &ret);
+	assertEqualsInt(31, getCERR(), "2", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "3", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_WavelengthEqZero"), "4", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, color_fade(1, 0, 0, 0), "5", &ret);
+	assertEqualsInt(29, getCERR(), "6", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "7", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_TimeGtWavelength"), "8", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, color_fade(-1, 0, 0, 0), "9", &ret);
+	assertEqualsInt(29, getCERR(), "10", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "11", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_TimeGtWavelength"), "12", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, color_fade(0, 1, 0, 0), "13", &ret);
+	assertEqualsInt(30, getCERR(), "14", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "15", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_StartEqEnd"), "16", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, color_fade(-1, 1, 0, 0), "17", &ret);
+	assertEqualsInt(30, getCERR(), "18", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "19", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_StartEqEnd"), "20", &ret);
+		free(message);
+		message = NULL;
+	}
+	assertEqualsInt(-1, color_fade(1, 1, 0, 0), "21", &ret);
+	assertEqualsInt(30, getCERR(), "22", &ret);
+	if(assertTrue(getCERRMessage(&message) != -1, "23", &ret)){
+		assertEqualsInt(0, strcmp(message, "[PH]CERR_ColorFade_StartEqEnd"), "24", &ret);
+		free(message);
+		message = NULL;
+	}
 	return ret;
 }

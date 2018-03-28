@@ -32,3 +32,6 @@
 *.dSYM/
 *.su
 src/place/batchAddFilesToDB.php
+OLD/*
+NEW/*
+

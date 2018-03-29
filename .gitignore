@@ -31,7 +31,12 @@
 # Debug files
 *.dSYM/
 *.su
+
 src/place/batchAddFilesToDB.php
-OLD/*
-NEW/*
+src/OLD/
+src/NEW/
+src/conceptTest1.php
+src/conceptTest2.php
+src/ConceptTest3.py
+src/ConceptTest4.php
 

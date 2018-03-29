@@ -3,7 +3,6 @@
 #include <string.h>
 #include "Color.h"
 #include "ColorErrorDef.h"
-#include "ColorTypeDef.h"
 #include "assertion.h"
 
 #define validWavelength 1
@@ -743,7 +742,7 @@ int testGenerateFadeToColor(){
 				assertTrue(((color*)(self->head->data))->green == c0.green, "3", &ret);
 				assertTrue(((color*)(self->head->data))->blue == c0.blue, "4", &ret);
 				assertTrue(((color*)(self->head->data))->brightness == c0.brightness, "5", &ret);
-				assertTrue(((color*)(self->head->data))->delay == c0.delay, "6", &ret);
+				assertTrue(((color*)(self->head->data))->delay == 1000000000, "6", &ret);
 			}
 			
 			// check step 100
@@ -752,10 +751,10 @@ int testGenerateFadeToColor(){
 				assertTrue(((color*)(self->tail->data))->green == c1.green, "13", &ret);
 				assertTrue(((color*)(self->tail->data))->blue == c1.blue, "14", &ret);
 				assertTrue(((color*)(self->tail->data))->brightness == c1.brightness, "15", &ret);
-				assertTrue(((color*)(self->tail->data))->delay == c1.delay, "16", &ret);
+				assertTrue(((color*)(self->tail->data))->delay == 1000000000, "16", &ret);
 			}
 		}
-		assertTrue(self->nodeCount == 101, "17", &ret);
+		assertEqualsInt(101, self->nodeCount, "17", &ret);
 	}
 	tearDown(&self);
 	return ret;

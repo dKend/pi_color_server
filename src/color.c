@@ -4,7 +4,6 @@
 #include <math.h>
 #include <string.h>
 #include "Color.h"
-#include "ColorTypeDef.h"
 #include "ColorErrorDef.h"
 
 #define MAX_COLOR 255
@@ -258,6 +257,9 @@ int addColorList(colorList* self, color* n){
 			create_node(&new, (void*)c, NULL, NULL);
 			self->tail = new;
 			ret = add_end(&(self->head), new);
+			if(ret!=-1){
+				self->nodeCount++;
+			}
 		}else
 			cerr = CERR_AddColorList_BadColor_NULLPointer;
 	}else
@@ -531,37 +533,38 @@ int duplicateColor(color* src, color** dest){
 }
 
 /*
-	Calculates the value of a fade over time from the color specified by start 
-	to the color specified by end. The value is proportional to the value of 
-	time/wavelength.
-	There are two cases that can occur when valid input is received:
-	Case 1:	Start < end
-		Steps:
-		(1)	difference = end - start
-		(2) add = difference * (time / wavelength)
-		(3) return start + add
-	Case 2: Start > end
-		Steps:
-		(1) difference = start - end
-		(2) add = difference * (time / wavelength)
-		(3) return start - add
-	We can actually factor this down to only case 1 since in the case of start >
-	end, the value of difference will be a negative number and as a result add 
-	will also be negative. So when we return the value of "start + add", in the 
-	second case this is the same as "start - add" where difference is calculated 
-	using "start - end".
-	
-	@param time float, number between 0 and wavelength
-	@param wavelength
-	@param start
-	@param end
-	@return ret
-	@error CERR_ColorFade_TimeGtWavelength
-	@error CERR_ColorFade_StartEqEnd
-	@error CERR_ColorFade_WavelengthEqZero
+*	Calculates the value of a fade over time from the color specified by start 
+*	to the color specified by end. The value is proportional to the value of 
+*	time/wavelength.
+*	There are two cases that can occur when valid input is received:
+*	Case 1:	Start < end
+*		Steps:
+*		(1)	difference = end - start
+*		(2) add = difference * (time / wavelength)
+*		(3) return start + add
+*	Case 2: Start > end
+*		Steps:
+*		(1) difference = start - end
+*		(2) add = difference * (time / wavelength)
+*		(3) return start - add
+*	We can actually factor this down to only case 1 since in the case of start >
+*	end, the value of difference will be a negative number and as a result add 
+*	will also be negative. So when we return the value of "start + add", in the 
+*	second case this is the same as "start - add" where difference is calculated 
+*	using "start - end".
+*	
+*	@param time float, number between 0 and wavelength
+*	@param wavelength
+*	@param start
+*	@param end
+*	@return ret
+*	@error CERR_ColorFade_TimeGtWavelength
+*	@error CERR_ColorFade_StartEqEnd
+*	@error CERR_ColorFade_WavelengthEqZero
 */
 int color_fade(float time, float wavelength, unsigned int start, unsigned int end){
 	int ret = -1;
+	time = fabsf(time);
 	if(time<=wavelength){
 		if(wavelength!=0){
 			if(start!=end){
@@ -580,20 +583,20 @@ int color_fade(float time, float wavelength, unsigned int start, unsigned int en
 }
 
 /*
-	Creates a colorList using the fade_color function. Creates nodes in a loop 
-	and calls the color_fade function for each part of the colors passed in 
-	pair. The start color will occupy the first node and the end color will 
-	occupy the last node generated.
-	
-	@param self colorList**
-	@param wavelength unsigned int; In SECONDS 
-	@param colorPair pair
-	@param delay_ns unsigned int; In NANOSECONDS
-	@error CERR_GenFadeColorList_SelfEqNULL				1
-	@error CERR_GenFadeColorList_SelfInit				2
-	@error CERR_GenFadeColorList_WavelengthZero			3
-	@error CERR_GenFadeColorList_DelayZero				4
-	@error CERR_GenFadeColorList_DelayGtWavelength		5
+*	Creates a colorList using the fade_color function. Creates nodes in a loop 
+*	and calls the color_fade function for each part of the colors passed in 
+*	pair. The start color will occupy the first node and the end color will 
+*	occupy the last node generated.
+*	
+*	@param self colorList**
+*	@param wavelength unsigned int; In SECONDS 
+*	@param colorPair pair
+*	@param delay_ns unsigned int; In NANOSECONDS
+*	@error CERR_GenFadeColorList_SelfEqNULL				1
+*	@error CERR_GenFadeColorList_SelfInit				2
+*	@error CERR_GenFadeColorList_WavelengthZero			3
+*	@error CERR_GenFadeColorList_DelayZero				4
+*	@error CERR_GenFadeColorList_DelayGtWavelength		5
 */
 int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, unsigned int delay_ns){
 	int ret = -1;
@@ -608,6 +611,7 @@ int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, 
 						initColorList(self); /* this should NEVER error */
 						float time = 0.0;
 						while(time <= lambda){
+							printf("time: %f\tlambda: %f\ttime_step: %f\n", time, lambda, time_step);
 							color* n = (color*)malloc(sizeof(color));
 							n->red = (unsigned int)color_fade(time, lambda, pair.start.red, pair.end.red);
 							n->green = (unsigned int)color_fade(time, lambda, pair.start.green, pair.end.green);
@@ -632,14 +636,71 @@ int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, 
 }
 
 /*
-	Saves the colorList stored in self to a file somewhere in storage so it can 
-	be used again at a later time.
-	
-	@param self colorList*
-	@error CERR_SaveColorList_AccessDenied
-	@error CERR_SaveColorList_OutOfSpace
+*	Saves the colorList stored in self to a file somewhere in storage so it can 
+*	be used again at a later time.
+*	
+*	@param self colorList*
+*	@error CERR_SaveColorList_AccessDenied
+*	@error CERR_SaveColorList_OutOfSpace
 */
 int saveColorList(colorList* self){
+	int ret = -1;
+	
+	return ret;
+}
+
+/*
+*	Initializes the colorListQueue by allocating space for the pointer on the 
+*	heap and setting the node count to zero.
+*
+*	@param self colorListQueue, Object to be initialized.
+*	@error 
+*	@error
+*	@return
+*/
+int initColorListQueue(colorListQueue** self){
+	int ret = -1;
+	
+	return ret;
+}
+
+int queueColorListQueue(colorListQueue* self, colorList* data, int repeat, int priority, int reque){
+	int ret = -1;
+	
+	return ret;
+}
+
+int requeueColorListQueue(colorListQueue* self, node* node){
+	int ret = -1;
+	
+	return ret;
+}
+
+int dequeueColorListQueue(colorListQueue* self, colorList** val){
+	int ret = -1;
+	
+	return ret;
+}
+
+int freeColorListQueue(colorListQueue** self){
+	int ret = -1;
+	
+	return ret;
+}
+
+int initColorListQueueNode(node** self){
+	int ret = -1;
+	
+	return ret;
+}
+
+int updateColorListQueueNode(node* self){
+	int ret = -1;
+	
+	return ret;
+}
+
+int isComplete(node* self){
 	int ret = -1;
 	
 	return ret;

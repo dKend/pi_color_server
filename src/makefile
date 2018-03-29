@@ -47,8 +47,8 @@ test_list.o: test_list.c
 lists:
 	make -C dstruct
 	
-test_color: test_color.o assertion.o color.o lists
-	gcc -Wall -lm color.o test_color.o assertion.o dstruct/lists.o -o test_color
+test_color: test_color.o assertion.o Color.o lists
+	gcc -Wall -lm Color.o test_color.o assertion.o dstruct/lists.o -o test_color
 
 test_color.o: test_color.c
 	gcc -Wall -c test_color.c

@@ -2,7 +2,10 @@ language: c
 
 compiler:
   - gcc
-
+addons:
+	apt:
+		packages:
+			- libm
 script:
   - make -C src test_assertion
   - make -C src test_list

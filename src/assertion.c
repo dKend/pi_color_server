@@ -66,7 +66,9 @@ int runTests(){
 			}
 			fflush(stdout);
 			i++;
+			ret = 0;
 		}
+		
 	}
 	destroyTests();
 	return ret;

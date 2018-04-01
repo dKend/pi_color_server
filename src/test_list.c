@@ -31,6 +31,7 @@ int main(){
 	registerTest(testFreeListCyclic, "testFreeListCyclic");
 	ret = runTests();
 	destroyTests();
+	printf("%d\n", ret);
 	return ret;
 }
 void setUpList(node** self){

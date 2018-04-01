@@ -503,8 +503,11 @@ int testFreeListCyclic(){
 	node1 = (node*)malloc(sizeof(node));
 	node2 = (node*)malloc(sizeof(node));
 	node0->data = ptr0;
+	node0->free_data = NULL;
 	node1->data = ptr1;
+	node1->free_data = NULL;
 	node2->data = ptr2;
+	node2->free_data = NULL;
 	node0->next = node1;
 	node1->next = node2;
 	node2->next = node0;

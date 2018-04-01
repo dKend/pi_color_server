@@ -4,7 +4,7 @@ compiler:
   - gcc
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y libc -qq
+  - sudo apt-get install -y libc6 -qq
 script:
   - make -C src test_assertion
   - make -C src test_list

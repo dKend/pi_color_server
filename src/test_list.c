@@ -30,7 +30,7 @@ int main(){
 	registerTest(testBreakCyclicList, "testBreakCyclicList");
 	registerTest(testFreeListCyclic, "testFreeListCyclic");
 	ret = runTests();
-	destroyTests();
+	//destroyTests();
 	printf("%d\n", ret);
 	return ret;
 }

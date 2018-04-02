@@ -9,6 +9,8 @@ script:
   - make -C src test_assertion
   - make -C src test_list
   - make -C src test_color
+  - make -C src test_threadList
   - ./src/test_assertion
   - ./src/test_list
   - ./src/test_color
+  - ./src/test_threadList

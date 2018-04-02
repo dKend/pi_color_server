@@ -49,7 +49,7 @@ int registerTest(int (*f)(), const char* str){
 }
 
 int runTests(){
-	int ret = -1;
+	int ret = 0;
 	if(nextIndex > 0){
 		int i = 0;
 		while(i < nextIndex && i < MAX_TESTS){
@@ -63,10 +63,10 @@ int runTests(){
 			}else{
 				printf("%s Failed\n", tests[i]->name);
 				fflush(stdout);
+				ret = -1;
 			}
 			fflush(stdout);
 			i++;
-			ret = 0;
 		}
 		
 	}

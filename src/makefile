@@ -6,19 +6,12 @@ install: cleanup_prev_install pcsd pcs
 	mv pcs /bin
 	
 pcsd: server.c
-	gcc -pthread -o pcsd server.c -lpigpiod_if2 -lrt
+	gcc -o pcsd server.c -lpigpiod_if2 -lrt -pthread
 	
 pcs: client.c
 	gcc -Wall -o pcs client.c
 
-test_all: testPigpiodFunctions test_assertion test_threadList test_list test_color
-	
-
-test: testPigpiodFunctions.o assertion.o
-	gcc -Wall -pthread testPigpiodFunctions.o assertion.o -o test0 -lpigpiod_if2 -lrt
-
-testPigpiodFunctions.o: testPigpiodFunctions.c
-	gcc -Wall -pthread -c testPigpiodFunctions.c -lpigpiod_if2 -lrt
+test_all: test_assertion test_threadList test_list test_color
 	
 test_assertion: assertion.o test_assertion.o
 	gcc -Wall assertion.o test_assertion.o -o test_assertion
@@ -30,13 +23,13 @@ assertion.o: assertion.c
 	gcc -Wall -c assertion.c
 	
 test_threadList: assertion.o test_threadList.o threadList.o
-	gcc -Wall -lpthread test_threadList.o assertion.o threadList.o -o test_threadList
+	gcc -Wall test_threadList.o assertion.o threadList.o -o test_threadList -lpthread
 	
 test_threadList.o: test_threadList.c 
-	gcc -Wall -lpthread -c test_threadList.c
+	gcc -Wall -c test_threadList.c
 
 threadList.o: threadList.c
-	gcc -Wall -lpthread -c threadList.c
+	gcc -Wall -c threadList.c
 	
 test_list: test_list.o assertion.o lists
 	gcc -Wall assertion.o dstruct/lists.o test_list.o -o test_list

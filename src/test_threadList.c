@@ -31,7 +31,7 @@ int main(){
 	registerTest(testIsEmptyThreadList, "testIsEmptyThreadList");
 	registerTest(testWaitForThreadsThreadList, "testWaitForThreadsThreadList");
 	runTests();
-	destroyTests();
+	//destroyTests();
 	return ret;
 }
 void setUp(struct threadList** self){

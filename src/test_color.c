@@ -63,7 +63,7 @@ int main(){
 	registerTest(testGenerateFadeToColor, "testGenerateFadeToColor");
 	
 	runTests();
-	destroyTests();
+	//destroyTests();
 	return 0;
 }
 

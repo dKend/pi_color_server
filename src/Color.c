@@ -84,7 +84,7 @@ static const char *CERR_Messages[] = {
 	"[PH]CERR_SaveColorList_OutOfSpace",
 };
 
-/*
+/**
 *	::getCERR::
 *
 *		- returns the current integer value of cerr.
@@ -95,12 +95,12 @@ static const char *CERR_Messages[] = {
 *
 *	::error conditions::
 *		- No errors possible.	
-*/
+**/
 unsigned int getCERR(){
 	return cerr;
 }
 
-/*
+/**
 *	::int getCERRName()::
 *
 *		- Allocates the passed pointer and copies the name string associated 
@@ -118,7 +118,7 @@ unsigned int getCERR(){
 *		[CERR_GetCERRName_BadPointer_NonNULL]
 *			- *Str was not NULL.
 *
-*/
+**/
 int getCERRName(char** str){
 	int ret = -1;
 	if(str != NULL){
@@ -132,7 +132,7 @@ int getCERRName(char** str){
 	return ret;
 }
 
-/*
+/**
 *	::int getCERRMesage(char** str)::
 *
 *		- Allocates and places a copy of the error name (cooresponding to the value stores in cerr) into the passed pointer.
@@ -150,7 +150,7 @@ int getCERRName(char** str){
 *		[CERR_GetCERRMessage_BadPointer_NonNULL]
 *			- *Str was not NULL.
 *
-*/
+**/
 int getCERRMessage(char** str){
 	int ret = -1;
 	if(str != NULL){
@@ -167,7 +167,7 @@ int getCERRMessage(char** str){
 	return ret;
 }
 
-/*
+/**
 *	::int freeColor(void* c)::
 *
 *		- Frees a color pointer.
@@ -182,7 +182,7 @@ int getCERRMessage(char** str){
 *		[CERR_FreeColor_BadPointer]
 *			- Self is NULL;
 *
-*/
+**/
 int freeColor(void* c){
 	int ret = -1;
 	if(c != NULL){
@@ -192,7 +192,7 @@ int freeColor(void* c){
 	return ret;	
 }
 
-/*
+/**
 *	::int initColorList(colorList** self)::
 *
 *		- Initializes the color list struct. This must be done before using any other functions.
@@ -209,7 +209,7 @@ int freeColor(void* c){
 *		[CERR_InitColorList_BadSelf_NULLPointerPointer]
 *			- Self* is not NULL.
 *
-*/
+**/
 int initColorList(colorList** self){
 	int ret = -1;
 	if(self != NULL){
@@ -227,7 +227,7 @@ int initColorList(colorList** self){
 	return ret;
 }
 
-/*
+/**
 *	::int addColorList(colorList* self, color* n)::
 *
 *		- Adds the color n to a new node that is inserted at the end of the colorlist pointed to by self.
@@ -246,7 +246,7 @@ int initColorList(colorList** self){
 *			- N is NULL (segmentation fault avoidance).
 *			
 *
-*/
+**/
 int addColorList(colorList* self, color* n){
 	int ret = -1;
 	if(self != NULL){
@@ -267,7 +267,7 @@ int addColorList(colorList* self, color* n){
 	return ret;
 }
 
-/*
+/**
 *	::int freeColorList(colorList** self)::
 *
 *		- frees the a color list pointed to by self, and sets the pointer to NULL
@@ -283,7 +283,7 @@ int addColorList(colorList* self, color* n){
 *		[CERR_FreeColorList_BadSelf_NullPointerPointer]
 *			- Self* is null (segmentation fault/double free avoidance).
 *
-*/
+**/
 int freeColorList(colorList** self){
 	int ret = -1;
 	if(self!=NULL){
@@ -300,7 +300,7 @@ int freeColorList(colorList** self){
 	return ret;
 }
 
-/*
+/**
 *	::int printColorList(colorList* self)::
 *
 *		- prints the colorlist pointed to by the self variable to stdout via printf
@@ -314,7 +314,7 @@ int freeColorList(colorList** self){
 *		[CERR_PrintColorList_BadColorList]
 *			- Self is zero (segmentation fault avoidance).
 *
-*/
+**/
 int printColorList(colorList* self){
 	int ret = -1;
 	if(self!=NULL){
@@ -334,7 +334,7 @@ int printColorList(colorList* self){
 	return ret;
 }
 
-/*
+/**
 *	::int sin_color_cycle(float time, float wavelength, int start, int end)::
 *	
 *		- computes the value @ time (x) of the sine function where int start is the min y value and end is the max y value.
@@ -350,7 +350,7 @@ int printColorList(colorList* self){
 *		
 *		[CERR_SinColorCycle_BadWavelength_Zero]
 *			- Wavelength is zero (division by zero avoidance).
-*/
+**/
 int sin_color_cycle(float time, float wavelength, int start, int end){
 	//time - current time
 	//wavelength - length in time units of 1 wave
@@ -401,7 +401,7 @@ int sin_color_cycle(float time, float wavelength, int start, int end){
 	return ret;
 }
 
-/*	
+/**	
 * 	::int genSinCurveColorList(colorList* self, unsigned int wavelength, colorPair pair, unsigned int delay_ns)::
 *
 *		- generates a colorList which is a fade from one color to another (specified in the colorPair variable).
@@ -428,7 +428,7 @@ int sin_color_cycle(float time, float wavelength, int start, int end){
 *		[CERR_GenSinCurveColorList_BadColorList_AlreadyInit]
 *			- List pointer's head pointer already pointed to an existing list.
 *
-*/
+**/
 int genSinCurveColorList(colorList** self, unsigned int wavelength, colorPair pair, unsigned int delay_ns){
 	int ret = -1;
 	if(self!=NULL){
@@ -489,7 +489,7 @@ int genSinCurveColorList(colorList** self, unsigned int wavelength, colorPair pa
 	return ret;
 }
 
-/*
+/**
 *	::int duplicateColor(color* self)::
 *
 *		- Allocate space into dest and duplicate the color pointed to by src into the newly allocated dest pointer.
@@ -510,7 +510,7 @@ int genSinCurveColorList(colorList** self, unsigned int wavelength, colorPair pa
 *		[CERR_DuplicateColor_BadDestPtr_NonNULL]
 *			- *Dest was not NULL.
 *
-*/
+**/
 int duplicateColor(color* src, color** dest){
 	int ret = -1;
 	if(src != NULL){
@@ -532,7 +532,7 @@ int duplicateColor(color* src, color** dest){
 	return ret;
 }
 
-/*
+/**
 *	Calculates the value of a fade over time from the color specified by start 
 *	to the color specified by end. The value is proportional to the value of 
 *	time/wavelength.
@@ -561,7 +561,7 @@ int duplicateColor(color* src, color** dest){
 *	@error CERR_ColorFade_TimeGtWavelength
 *	@error CERR_ColorFade_StartEqEnd
 *	@error CERR_ColorFade_WavelengthEqZero
-*/
+**/
 int color_fade(float time, float wavelength, unsigned int start, unsigned int end){
 	int ret = -1;
 	time = fabsf(time);
@@ -582,7 +582,7 @@ int color_fade(float time, float wavelength, unsigned int start, unsigned int en
 	return ret;
 }
 
-/*
+/**
 *	Creates a colorList using the fade_color function. Creates nodes in a loop 
 *	and calls the color_fade function for each part of the colors passed in 
 *	pair. The start color will occupy the first node and the end color will 
@@ -597,7 +597,7 @@ int color_fade(float time, float wavelength, unsigned int start, unsigned int en
 *	@error CERR_GenFadeColorList_WavelengthZero			3
 *	@error CERR_GenFadeColorList_DelayZero				4
 *	@error CERR_GenFadeColorList_DelayGtWavelength		5
-*/
+**/
 int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, unsigned int delay_ns){
 	int ret = -1;
 	if(self != NULL){
@@ -608,7 +608,7 @@ int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, 
 					float lambda = (float)wavelength;
 					
 					if(time_step < lambda){
-						initColorList(self); /* this should NEVER error */
+						initColorList(self); // this should NEVER error 
 						float time = 0.0;
 						while(time <= lambda){
 							printf("time: %f\tlambda: %f\ttime_step: %f\n", time, lambda, time_step);
@@ -635,68 +635,135 @@ int genFadeColorList(colorList** self, unsigned int wavelength, colorPair pair, 
 	return ret;
 }
 
-/*
+/**
 *	Saves the colorList stored in self to a file somewhere in storage so it can 
 *	be used again at a later time.
 *	
 *	@param self colorList*
 *	@error CERR_SaveColorList_AccessDenied
 *	@error CERR_SaveColorList_OutOfSpace
-*/
+**/
 int saveColorList(colorList* self){
 	int ret = -1;
 	
 	return ret;
 }
 
-/*
+/**
 *	Initializes the colorListQueue by allocating space for the pointer on the 
 *	heap and setting the node count to zero.
 *
-*	@param self colorListQueue, Object to be initialized.
-*	@error 
-*	@error
-*	@return
-*/
+*	@param	self colorListQueue, Object to be initialized.
+*
+*	@error	CERR_InitColorListQueue_NULL,	self is NULL
+*	@error	CERR_InitColorListQueue_NotNULL	self is already initialized.
+*	
+*	@return	0 on success, -1 on error.
+**/
 int initColorListQueue(colorListQueue** self){
 	int ret = -1;
 	
 	return ret;
 }
 
+/**
+*	Adds a colorList to the queue and sets the given flags/data in the data 
+*	struct.
+*	
+*	@param 	colorListQueue* self, the colorListQueue to perform the operaiton 
+*	on.
+*	@param	colorList* data, the colorList to add to the queue.
+*	@param	int repeat, flag that indicates if and how many times the list will 
+*	be 'executed' while it is at the front of the queue.
+*	@param	int priority, number that indicates the priority of the list, lower 
+*	numbers indicate low priority, higher numbers indicate higher priority.
+*	@param	int reque, number that indicates if and how many times a list will 
+*	be requeued. Negative numbers will be replaced with zero.
+*	@error	CERR_QueClrLstQueue_SelfNULL,	self is NULL.
+*	@error	CERR_QueClrLstQueue_DataNull,	data is NULL.
+*	@return	0 on success, -1 on error.
+**/
 int queueColorListQueue(colorListQueue* self, colorList* data, int repeat, int priority, int reque){
 	int ret = -1;
 	
 	return ret;
 }
 
-int requeueColorListQueue(colorListQueue* self, node* node){
+/**
+*	Pops a node from the front of the list and moves it to the back of the list 
+*	if certain conditions are met.
+*	Operations:
+*	<p>
+*		1)
+*			(Condition)
+*				If the requeue value of the head node is greater then 0 OR equal
+*				to -1.
+*			(Operation)
+*				The head node is 'popped' from the top of the queue and  
+*				queued again to the back of the queue regardless of the data's 
+*				priority value.
+*
+*		2)
+*			(Condition)
+*				If and only if the value of the head node is greater than 0.
+*			(Operation)
+*				The node's requeue value is decremented by one.
+*	</p>
+*	<p>
+*		(NOTE) 
+*			If the list only contains one node and the condition for operation 2 
+*			is met, then the node's requeue field is decremented and no further  
+*			actions occur.
+*	</p>
+*	<p>
+*		The value of a node's requeue field indicates how many times that node  
+*		is allowed to reach the head node position in the queue. If requeue is  
+*		called on a node which has a requeue value of 0, then the node is 
+*		removed from the list and deallocated (AKA 'dequeue' is called).
+*	</p>
+*
+*	@param	colorListQueue* self, list on which the operation is performed.
+*	@error	CERR_RequeClrLstQueue_NULL, self is NULL.
+*	@return	0 on success, -1 on error.
+**/
+int requeueColorListQueue(colorListQueue* self){
 	int ret = -1;
 	
 	return ret;
 }
 
-int dequeueColorListQueue(colorListQueue* self, colorList** val){
+/**
+*	Removes the node at the front of the queue from the list and frees said 
+*	node.
+*
+*	@param colorListQueue* self, list which is to have its head node removed.
+*	@return	0 on success, -1 on error.
+**/
+int dequeueColorListQueue(colorListQueue* self){
 	int ret = -1;
 	
 	return ret;
 }
 
+/**
+*	Deallocates the entire queue and sets the self pointer argument to NULL.
+*
+*	@param colorListQueue** self, queue to be deallocated.
+*	@return	0 on success, -1 on error.
+**/
 int freeColorListQueue(colorListQueue** self){
 	int ret = -1;
 	
 	return ret;
 }
 
-int initColorListQueueNode(node** self){
+int freeColorListQueueData(void* arg){
 	int ret = -1;
-	
-	return ret;
-}
-
-int updateColorListQueueNode(node* self){
-	int ret = -1;
-	
+	if(arg != NULL){
+		freeColorList(&(arg->list));
+		free(arg);
+		ret = 0;
+	}
 	return ret;
 }
 

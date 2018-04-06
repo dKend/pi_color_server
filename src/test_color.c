@@ -36,6 +36,24 @@ int testColorFade_Error();
 int testGenerateFadeToColor();
 int testGenerateFadeToColor_Error();
 
+void setUp2(struct colorListQueue** self);
+void tearDown2(struct colorListQueue** self);
+void setUp2_OneElement(struct colorListQueue** self);
+void setUp2_TwoElement(struct colorListQueue** self);
+void setUp2_ManyElement(struct colorListQueue** self);
+int testInitColorListQueue_Error();
+int testIntiColorListQueue();
+int testQueueColorListQueue_Error();
+int testQueueColorListQueue();
+int testDequeueColorListQueue_Error();
+int testDequeueColorListQueue();
+int testRequeueColorListQueue_Error();
+int testRequeueColorListQueue();
+int testFreeColorListQueue_Error();
+int testFreeColorListQueue();
+
+
+
 int main(){
 	//	tests that have already been written and pass
 	registerTest(testGetCERR, "testGetCERR");
@@ -55,8 +73,6 @@ int main(){
 	registerTest(testGenSinCurveColorList, "testGenSinCurveColorList");
 	registerTest(testDuplicateColor_Error, "testDuplicateColor_Error");
 	registerTest(testDuplicateColor, "testDuplicateColor");
-	
-	//	tests that still need to be written
 	registerTest(testColorFade_Error, "testColorFade_Error");
 	registerTest(testColorFade, "testColorFade");
 	registerTest(testGenerateFadeToColor_Error, "testGenerateFadeToColor_Error");
@@ -974,5 +990,97 @@ int testColorFade_Error(){
 		free(message);
 		message = NULL;
 	}
+	return ret;
+}
+
+//	Color Test 2: Electric Boog-a-Queue OwO
+void setUp2(struct colorListQueue** self){
+	(*self) = (colorListQueue*)malloc(sizeof(colorListQueue));
+	(*self)->head = NULL;
+	(*self)->tail = NULL;
+	(*self)->nodeCount = 0;
+}
+void setUp2_OneElement(struct colorListQueue** self){
+	setUp2(self);
+	// create a node and some data
+	node* n = NULL;
+	colorList* l = NULL;
+	color c0 = {255, 255, 255, 255, 1000};
+	color c1 = {0, 0, 0, 0, 12};
+	color c2 = {1, 1, 1, 1, 500};
+	initColorList(&l);
+	addColorList(l, &c0);
+	addColorList(l, &c1);
+	addColorList(l, &c2);
+	colorListQueueData* d = (colorListQueueData*)malloc(sizeof(colorListQueueData));
+	d->list = l;
+	d->current = l->head;
+	d->timesRepeated = 0;
+	d->msPassedSinceNodeChange = 0;
+	d->repeat_f = 0;
+	d->prior_f = 0;
+	d->reque_f = 0;
+	create_node(&n, l, NULL, freeColorListQueueData);
+	(*self)->head = n;
+	(*self)->tail = n;
+	(*self)->nodeCount = 1;
+}
+void setUp2_TwoElement(struct colorListQueue** self){
+	
+}
+void setUp2_ManyElement(struct colorListQueue** self){
+	
+}
+void tearDown2(struct colorListQueue** self){
+	
+}
+int testInitColorListQueue_Error(){
+	int ret = -1;
+	
+	return ret;
+}
+int testIntiColorListQueue(){
+	int ret = -1;
+	
+	return ret;
+}
+int testQueueColorListQueue_Error(){
+	int ret = -1;
+	
+	return ret;
+}
+int testQueueColorListQueue(){
+	int ret = -1;
+	
+	return ret;
+}
+int testDequeueColorListQueue_Error(){
+	int ret = -1;
+	
+	return ret;
+}
+int testDequeueColorListQueue(){
+	int ret = -1;
+	
+	return ret;
+}
+int testRequeueColorListQueue_Error(){
+	int ret = -1;
+	
+	return ret;
+}
+int testRequeueColorListQueue(){
+	int ret = -1;
+	
+	return ret;
+}
+int testFreeColorListQueue_Error(){
+	int ret = -1;
+	
+	return ret;
+}
+int testFreeColorListQueue(){
+	int ret = -1;
+	
 	return ret;
 }

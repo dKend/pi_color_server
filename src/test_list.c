@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "dstruct/lists.h"
+#include "List.h"
 #include "assertion.h"
 
 //setup and tear down functions

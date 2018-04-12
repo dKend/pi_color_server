@@ -759,9 +759,10 @@ int freeColorListQueue(colorListQueue** self){
 
 int freeColorListQueueData(void* arg){
 	int ret = -1;
+	colorListQueueData* tmp = (colorListQueueData*) arg;
 	if(arg != NULL){
-		freeColorList(&(arg->list));
-		free(arg);
+		freeColorList(&(tmp->list));
+		free(tmp);
 		ret = 0;
 	}
 	return ret;

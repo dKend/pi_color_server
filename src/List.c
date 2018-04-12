@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "lists.h"
+#include "List.h"
 
 //create a node
 int free_list_helper(node** head);

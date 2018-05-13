@@ -5,8 +5,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include "version.h"
 
-#include "client.h"
 #define DIR_PATH "/tmp/pcs"
 #define MAX 255
 /*
@@ -20,6 +20,8 @@
 		
 	
 */
+int establish_connection();
+int client_handle_input(int argc, const char* argv[]);
 int main(int argc, const char* argv[])
 {
 	chdir(DIR_PATH); 

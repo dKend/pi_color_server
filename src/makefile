@@ -1,12 +1,13 @@
-test_build: pcs-server pcs-client
+test_build: pcsd pcs
 	@echo Build Completed.
 	
-install: pcs-server pcs-client
-	sudo mv pcs-server /bin
-	sudo mv pcs-client /bin
+pcsd: PCSServer.c
+	gcc -Wall -pthread -o pcsd PCSServer.c -lpigpiod_if2 -lrt
 	
-pcs-server: server.c
-	gcc -Wall -pthread -o pcs-server server.c -lpigpiod_if2 -lrt
+pcs: PCSClient.c assertion.o
+	gcc -Wall -o pcs lib/SimpleCTesting/assertion.o PCSClient.c
+	rm lib/SimpleCTesting/assertion.o
 	
-pcs-client: client.c
-	gcc -o pcs-client client.c
+assertion.o:
+	make -C lib/SimpleCTesting assertion.o
+	

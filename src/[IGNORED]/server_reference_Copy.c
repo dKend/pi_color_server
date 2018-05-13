@@ -48,30 +48,21 @@ int log_output(const char * str, FILE* log);
 		
 	*/
 
-int main(int argc, const char* argv[])
-{
-	if(argc >= 2)
-	{
+int main(int argc, const char* argv[]){
+	if(argc >= 2){
 		//create a binary code for each different argument so we can use a switch/case statement here.
-		if (strcmp(argv[1], "-t")==0) //run tests
-		{
+		if (strcmp(argv[1], "-t")==0){
 			
-		}
-		else if(strcmp(argv[1], "-d")==0) //daemon process
-		{
+		}else if(strcmp(argv[1], "-d")==0){
 			int pi = pigpio_start(NULL, NULL);
 			int pid = fork();
-			if(pid < 0)
-			{
+			if(pid < 0){
 				exit(1);
-			}
-			else if(pid == 0)
-			{
+			}else if(pid == 0){
 				umask(0);
 				int sid = setsid();
 				
-				if(sid<0)
-				{
+				if(sid<0){
 					printf("error: setsid() failed.\n");
 					fflush(stdout);
 					exit(1);
@@ -82,15 +73,13 @@ int main(int argc, const char* argv[])
 				if(dir)
 					closedir(dir);
 				else if(errno == ENOENT)
-				{
 					mkdir(DIR_PATH, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH|S_IWOTH);
-				}else
+				else
 					perror("unable to determine file existence.");
 				
 				chdir(DIR_PATH);
 				
-				if(access("colorserver", F_OK)!=-1)
-				{
+				if(access("colorserver", F_OK)!=-1){
 					printf("error: server already running or socket file already exists.\n");
 					fflush(stdout);
 					exit(1);
@@ -100,21 +89,15 @@ int main(int argc, const char* argv[])
 				close(STDERR_FILENO);
 				listen_loop(pi);
 				exit(0);
-			}
-			else
-			{
+			}else{
 				printf("daemon main process ID: %d\n", pid);
 				exit(0);
 			}
-		}
-		else //handle with client otherwise
-		{
+		}else{
 			printf("invald arguments.\n");
 			fflush(stdout);
 		}
-	}
-	else
-	{
+	}else{
 		printf("Unable to start the server, run with -d command to start the daemon.\n");
 		fflush(stdout);
 	}
@@ -122,33 +105,26 @@ int main(int argc, const char* argv[])
 	return 0;
 }
 
-int process_request(int pi, int sock)
-{
-	
+int process_request(int pi, int sock){
 	int command = 0;
 	read(sock, &command, sizeof(int));
 	return command;
 }
 
-void listen_loop(int pi)
-{
-	
+void listen_loop(int pi){
 	DIR* dir = opendir(LOG_PATH);
 	if(dir)
 		closedir(dir);
 	else if(errno == ENOENT)
-	{
 		mkdir(LOG_PATH, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-	}else
+	else
 		perror("unable to determine file existence.");
-	
 	
 	char buffer[BUFF_LEN];
 	sprintf(buffer, "%s/%s", LOG_PATH, LOG_NAME);
 	
 	FILE* log = NULL;
 	log = fopen(buffer, "w+");
-	//int status;
 	
 	struct sockaddr servaddr = {AF_UNIX, "colorserver"};
 	
@@ -156,8 +132,7 @@ void listen_loop(int pi)
 	
 	int sock1 = socket(AF_UNIX, SOCK_STREAM, 0);
 	
-	if(sock1 == -1)
-	{
+	if(sock1 == -1){
 		log_output("\nFailed to create socket, aborting...\n", log);
 		pigpio_stop(pi);
 		fclose(log);
@@ -166,15 +141,13 @@ void listen_loop(int pi)
 	log_output("\nSocket Created successfully with name/id \"colorserver\"\n", log);
 	bind(sock1, &servaddr, servaddrlen);
 	
-	if( listen(sock1, 0) != -1 )
-	{
+	if(listen(sock1, 0) != -1 ){
 		chmod("colorserver", 511);
 		log_output("Server now listening for connections...\n", log);
 		int var = 0;
 		
 		struct sigaction news, olds;
-		void ctrlc()
-		{
+		void ctrlc(){
 			log_output("\nHalting Color Server...\n", log);
 			sigaction(SIGINT, &olds, NULL);
 			close(sock1);
@@ -192,8 +165,7 @@ void listen_loop(int pi)
 		sigaction(SIGINT, &news, &olds);
 		FILE* lastcolor = NULL;
 		int lc_exists = 0;
-		if(access(SAV_NAME, R_OK|F_OK) !=-1 )
-		{
+		if(access(SAV_NAME, R_OK|F_OK) !=-1 ){
 			lastcolor = fopen(SAV_NAME, "r");
 			lc_exists = 1;
 		}
@@ -203,8 +175,7 @@ void listen_loop(int pi)
 		int br = MAX;
 		int colorchanged = 0;
 		
-		if(lc_exists == 1)
-		{
+		if(lc_exists == 1){
 			fread(&r, sizeof(int), 1, lastcolor);
 			fread(&g, sizeof(int), 1, lastcolor);
 			fread(&b, sizeof(int), 1, lastcolor);
@@ -215,27 +186,23 @@ void listen_loop(int pi)
 		
 		
 		
-		while(var == 0)
-		{
+		while(var == 0){
 			int sock2 = accept(sock1, NULL, NULL);
-			if(sock2!=-1)
-			{
+			if(sock2!=-1){
 				log_output("Socket Connection Accepted!\n", log);
 				int resp_code = process_request(pi, sock2);
 				char tmp[BUFF_LEN];
 				sprintf(tmp,"%d response code.\n",resp_code);
 				log_output(tmp , log);
 				
-				switch(resp_code)
-				{
+				switch(resp_code){
 					case 1:
 						close(sock2);
 						ctrlc();
 						break;
 					
 					case 2:
-						if(colorchanged == 0)
-						{
+						if(colorchanged == 0){
 							read(sock2, &r, sizeof(int));
 							read(sock2, &g, sizeof(int));
 							read(sock2, &b, sizeof(int));
@@ -278,8 +245,7 @@ void listen_loop(int pi)
 				
 			}
 			
-			if(colorchanged==1)
-			{
+			if(colorchanged==1){
 				int tmp_r = r;
 				int tmp_g = g;
 				int tmp_b = b;
@@ -299,34 +265,29 @@ void listen_loop(int pi)
 		fclose(lastcolor);
 		lastcolor = NULL;
 		
-	}else
-	{
+	}else{
 		log_output("Listen failed, aborting...\n", log);
 		pigpio_stop(pi);
 		fclose(log);
 		exit(1);
 		
 	}
-	if(log != NULL)
-	{
+	if(log != NULL){
 		fclose(log);
 	}
 	
 }
 
-int log_output(const char * str, FILE* log)
-{
+int log_output(const char * str, FILE* log){
 	int ret = 0;
-	if (log != NULL)
-	{
+	if (log != NULL){
 		ret = strlen(str);
 		fwrite(str, sizeof(char), ret, log);
 	}
 	return ret;
 }
 
-void apply_brightness(int* n, int bright)
-{
+void apply_brightness(int* n, int bright){
 	if ( n != NULL  ){
 		*n = ((*n) * bright)/MAX;
 	}

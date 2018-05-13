@@ -1,0 +1,68 @@
+##
+# Filter out images with less than 10 reposts
+# Find the number of reposts for each specific image in any subreddit.
+# Find the time and place where the image received the most upvotes.
+##
+#repostCount <- matrix(data=0, nr=length(imageIDs), nc=4)
+#colnames(repostCount) <- c("image_id", "reposts", "time_of_best_repost", "place_of_best_repost")
+#for(i in 1:length(imageIDs)){
+#  tmp <- submissions[submissions$image_id == imageIDs[i], c(2, 8, 11)]
+#  repostCount[i, 1] <- imageIDs[i]
+#  repostCount[i, 2] <- nrow(tmp)
+#  indexOfMax <- which.max(tmp[, 2])
+#  repostCount[i, 3] <- tmp[indexOfMax, "unixtime"]
+#  repostCount[i, 4] <- tmp[indexOfMax, "subreddit"]
+#}
+s <- matrix(data=0, nr=max(imageIDs), nc=10)
+colnames(s) <- subredditIDs[1:10]
+for(i in 1:length(imageIDs)){
+  for(j in 1:10){
+    tmp <- submissions[submissions$image_id == i,]
+    tmp <- tmp[tmp$subreddit == subredditIDs[j], "score"]
+    if(length(tmp) != 0){
+      s[imageIDs[i], j] <- max(tmp)  
+    }
+  }
+}
+subredditOccurCount <- matrix(data=0, nr=length(subredditIDs), nc=1)
+colnames(subredditOccurCount) <- c("subreddit_", "post_count")
+for(i in 1:length(subredditIDs)){
+  subredditOccurCount[i, pot] <- nrow(submissions[submissions$subreddit == subredditIDs[i],])
+}
+
+yAxisMaximum <- max(submissions$score, na.rm=TRUE)
+yAxisMinimum <- min(submissions$score, na.rm=TRUE)
+plot_colors <- c("red", "green", "blue", "orange", "yellow", "purple", "pink", "black", "forestgreen", "gray")
+plot(s[1:25887, 1], type="o", col=plot_colors[1], ylim=c(0, yAxisMaximum/2), axes=FALSE, ann=FALSE)
+#axis(1, labels=imageIDs[1:10])
+#axis(2, labels=subredditIDs[1:10])
+box()
+lines(s[1:25887, 2], type="o", col=plot_colors[2])
+lines(s[1:25887, 3], type="o", col=plot_colors[3])
+lines(s[1:25887, 4], type="o", col=plot_colors[4])
+lines(s[1:25887, 5], type="o", col=plot_colors[5])
+lines(s[1:25887, 6], type="o", col=plot_colors[6])
+lines(s[1:25887, 7], type="o", col=plot_colors[7])
+lines(s[1:25887, 8], type="o", col=plot_colors[8])
+lines(s[1:25887, 9], type="o", col=plot_colors[9])
+lines(s[1:25887, 10], type="o", col=plot_colors[10])
+
+################################################################################
+# get ids of images where score is greater than 2500
+bigImages <- submissions[submissions$score >= 2500, "image_id"]
+bigImages <- bigImages[!is.na(bigImages)]
+
+# this data structure is extremely large 3.2Mb
+s2 <- matrix(data=0, nr=length(subredditIDs), nc=length(bigImages))
+rownames(s2) <- subredditIDs
+colnames(s2) <- bigImages
+for(i in row.names(s2)){
+  for(j in colnames(s2)){
+    comp <- submissions[submissions$image_id == j, ]
+    comp <- max(comp[comp$subreddit == i, "score"], na.rm=TRUE)
+    if(is.infinite(comp)){
+      comp <- 0
+    }
+    s2[i, j] <- comp
+  }
+}
